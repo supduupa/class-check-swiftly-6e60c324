@@ -61,6 +61,20 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				status: {
+					present: 'hsl(var(--status-present))',
+					'present-foreground': 'hsl(var(--status-present-foreground))',
+					'present-hover': 'hsl(var(--status-present-hover))',
+					absent: 'hsl(var(--status-absent))',
+					'absent-foreground': 'hsl(var(--status-absent-foreground))',
+					'absent-hover': 'hsl(var(--status-absent-hover))',
+					late: 'hsl(var(--status-late))',
+					'late-foreground': 'hsl(var(--status-late-foreground))',
+					'late-hover': 'hsl(var(--status-late-hover))',
+					excused: 'hsl(var(--status-excused))',
+					'excused-foreground': 'hsl(var(--status-excused-foreground))',
+					'excused-hover': 'hsl(var(--status-excused-hover))'
 				}
 			},
 			borderRadius: {
