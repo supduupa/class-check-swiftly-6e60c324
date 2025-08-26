@@ -1,19 +1,22 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { DateSelector } from "@/components/DateSelector";
 import { StudentList } from "@/components/StudentList";
 import { AddStudentDialog } from "@/components/AddStudentDialog";
 import { DailySummary } from "@/components/DailySummary";
 import { Student, Attendance, AttendanceStatus } from "@/types/attendance";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { GraduationCap } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { GraduationCap, LogOut } from "lucide-react";
 
 const Index = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [students, setStudents] = useLocalStorage<Student[]>('attendance-students', []);
   const [attendanceRecords, setAttendanceRecords] = useLocalStorage<Attendance[]>('attendance-records', []);
   const [showAddStudent, setShowAddStudent] = useState(false);
+  const { user, signOut } = useAuth();
 
   const selectedDateString = format(selectedDate, 'yyyy-MM-dd');
 
@@ -55,9 +58,25 @@ const Index = () => {
       {/* Header */}
       <div className="bg-gradient-to-r from-primary to-primary/90 text-primary-foreground">
         <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center gap-3 mb-6">
-            <GraduationCap className="h-8 w-8" />
-            <h1 className="text-3xl font-bold">Class Attendance</h1>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <GraduationCap className="h-8 w-8" />
+              <h1 className="text-3xl font-bold">Class Attendance</h1>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-primary-foreground/80">
+                Welcome, {user?.email}
+              </span>
+              <Button
+                onClick={signOut}
+                variant="outline"
+                size="sm"
+                className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
