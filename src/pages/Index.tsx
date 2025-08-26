@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { DateSelector } from "@/components/DateSelector";
 import { StudentList } from "@/components/StudentList";
 import { AddStudentDialog } from "@/components/AddStudentDialog";
+import { DailySummary } from "@/components/DailySummary";
 import { Student, Attendance, AttendanceStatus } from "@/types/attendance";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { GraduationCap } from "lucide-react";
@@ -76,6 +77,12 @@ const Index = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
+        <DailySummary
+          students={students}
+          attendanceRecords={attendanceRecords}
+          selectedDate={selectedDateString}
+        />
+        
         <Card className="shadow-lg">
           <div className="p-6">
             <StudentList
