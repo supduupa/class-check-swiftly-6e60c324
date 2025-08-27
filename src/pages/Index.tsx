@@ -53,6 +53,35 @@ const Index = () => {
     }
   };
 
+  const handleBulkAttendanceChange = (studentIds: string[], status: AttendanceStatus) => {
+    const updatedRecords = [...attendanceRecords];
+    
+    studentIds.forEach(studentId => {
+      const existingRecordIndex = updatedRecords.findIndex(
+        record => record.studentId === studentId && record.date === selectedDateString
+      );
+
+      if (existingRecordIndex >= 0) {
+        // Update existing record
+        updatedRecords[existingRecordIndex] = {
+          ...updatedRecords[existingRecordIndex],
+          status
+        };
+      } else {
+        // Create new record
+        const newRecord: Attendance = {
+          id: `attendance-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${studentId}`,
+          studentId,
+          date: selectedDateString,
+          status
+        };
+        updatedRecords.push(newRecord);
+      }
+    });
+    
+    setAttendanceRecords(updatedRecords);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -109,6 +138,7 @@ const Index = () => {
               attendanceRecords={attendanceRecords}
               selectedDate={selectedDateString}
               onAttendanceChange={handleAttendanceChange}
+              onBulkAttendanceChange={handleBulkAttendanceChange}
               onAddStudent={() => setShowAddStudent(true)}
             />
           </div>
