@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { AttendanceStatus } from "./AttendanceStatus";
 import { Student, Attendance, AttendanceStatus as Status } from "@/types/attendance";
-import { Search, UserPlus, Check, Users } from "lucide-react";
+import { Search, UserPlus, Check, Users, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -18,6 +18,7 @@ interface StudentListProps {
   onAttendanceChange: (studentId: string, status: Status) => void;
   onBulkAttendanceChange: (studentIds: string[], status: Status) => void;
   onAddStudent: () => void;
+  onImportStudents: () => void;
 }
 
 export function StudentList({ 
@@ -26,7 +27,8 @@ export function StudentList({
   selectedDate, 
   onAttendanceChange,
   onBulkAttendanceChange,
-  onAddStudent 
+  onAddStudent,
+  onImportStudents 
 }: StudentListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
@@ -134,6 +136,14 @@ export function StudentList({
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          <Button 
+            onClick={onImportStudents}
+            variant="outline" 
+            className="border-primary/20 hover:bg-primary/5"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Import CSV
+          </Button>
           <Button onClick={onAddStudent} className="bg-primary hover:bg-primary/90">
             <UserPlus className="h-4 w-4 mr-2" />
             Add Student
