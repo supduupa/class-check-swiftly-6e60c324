@@ -9,119 +9,397 @@ import { CsvImportDialog } from "@/components/CsvImportDialog";
 import { CsvExportDialog } from "@/components/CsvExportDialog";
 import { DailySummary } from "@/components/DailySummary";
 import { Student, Attendance, AttendanceStatus, AttendanceRecord } from "@/types/attendance";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { GraduationCap, LogOut, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [students, setStudents] = useLocalStorage<Student[]>('attendance-students', []);
-  const [attendanceRecords, setAttendanceRecords] = useLocalStorage<Attendance[]>('attendance-records', []);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<Attendance[]>([]);
   const [showAddStudent, setShowAddStudent] = useState(false);
   const [showCsvImport, setShowCsvImport] = useState(false);
   const [showCsvExport, setShowCsvExport] = useState(false);
-  const { user, signOut } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const { profile, signOut } = useAuth();
   const { toast } = useToast();
 
   const selectedDateString = format(selectedDate, 'yyyy-MM-dd');
 
-  const handleAddStudent = (studentData: Omit<Student, 'id'>) => {
-    const newStudent: Student = {
-      ...studentData,
-      id: `student-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    };
-    setStudents(prev => [...prev, newStudent]);
-  };
+  // Load data from Supabase
+  useEffect(() => {
+    loadStudents();
+    loadAttendance();
+  }, []);
 
-  const handleAttendanceChange = (studentId: string, status: AttendanceStatus) => {
-    const existingRecordIndex = attendanceRecords.findIndex(
-      record => record.studentId === studentId && record.date === selectedDateString
-    );
+  useEffect(() => {
+    loadAttendance(); // Reload attendance when date changes
+  }, [selectedDateString]);
 
-    if (existingRecordIndex >= 0) {
-      // Update existing record
-      const updatedRecords = [...attendanceRecords];
-      updatedRecords[existingRecordIndex] = {
-        ...updatedRecords[existingRecordIndex],
-        status
-      };
-      setAttendanceRecords(updatedRecords);
-    } else {
-      // Create new record
-      const newRecord: Attendance = {
-        id: `attendance-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        studentId,
-        date: selectedDateString,
-        status
-      };
-      setAttendanceRecords(prev => [...prev, newRecord]);
+  const loadStudents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('students')
+        .select('*')
+        .order('full_name');
+
+      if (error) {
+        console.error('Error loading students:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load students',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      setStudents((data || []).map(student => ({
+        id: student.id,
+        fullName: student.full_name,
+        studentId: student.student_id,
+        email: student.email,
+        phone: student.phone
+      })));
+    } catch (error) {
+      console.error('Error loading students:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleBulkAttendanceChange = (studentIds: string[], status: AttendanceStatus) => {
-    const updatedRecords = [...attendanceRecords];
-    
-    studentIds.forEach(studentId => {
-      const existingRecordIndex = updatedRecords.findIndex(
+  const loadAttendance = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('attendance')
+        .select('*')
+        .order('date', { ascending: false });
+
+      if (error) {
+        console.error('Error loading attendance:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load attendance records',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      setAttendanceRecords((data || []).map(record => ({
+        id: record.id,
+        studentId: record.student_id,
+        date: record.date,
+        status: record.status,
+        note: record.note
+      })));
+    } catch (error) {
+      console.error('Error loading attendance:', error);
+    }
+  };
+
+  const handleAddStudent = async (studentData: Omit<Student, 'id'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('students')
+        .insert({
+          full_name: studentData.fullName,
+          student_id: studentData.studentId,
+          email: studentData.email,
+          phone: studentData.phone
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding student:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to add student',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const newStudent: Student = {
+        id: data.id,
+        fullName: data.full_name,
+        studentId: data.student_id,
+        email: data.email,
+        phone: data.phone
+      };
+
+      setStudents(prev => [...prev, newStudent]);
+      toast({
+        title: 'Success',
+        description: `${studentData.fullName} has been added to the class`,
+      });
+    } catch (error) {
+      console.error('Error adding student:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to add student',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleAttendanceChange = async (studentId: string, status: AttendanceStatus) => {
+    try {
+      const existingRecordIndex = attendanceRecords.findIndex(
         record => record.studentId === studentId && record.date === selectedDateString
       );
 
       if (existingRecordIndex >= 0) {
         // Update existing record
+        const recordId = attendanceRecords[existingRecordIndex].id;
+        const { error } = await supabase
+          .from('attendance')
+          .update({ status })
+          .eq('id', recordId);
+
+        if (error) {
+          console.error('Error updating attendance:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to update attendance',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        const updatedRecords = [...attendanceRecords];
         updatedRecords[existingRecordIndex] = {
           ...updatedRecords[existingRecordIndex],
           status
         };
+        setAttendanceRecords(updatedRecords);
       } else {
         // Create new record
+        const { data, error } = await supabase
+          .from('attendance')
+          .insert({
+            student_id: studentId,
+            date: selectedDateString,
+            status
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error creating attendance:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to record attendance',
+            variant: 'destructive',
+          });
+          return;
+        }
+
         const newRecord: Attendance = {
-          id: `attendance-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${studentId}`,
-          studentId,
-          date: selectedDateString,
-          status
+          id: data.id,
+          studentId: data.student_id,
+          date: data.date,
+          status: data.status,
+          note: data.note
         };
-        updatedRecords.push(newRecord);
+        setAttendanceRecords(prev => [...prev, newRecord]);
       }
-    });
-    
-    setAttendanceRecords(updatedRecords);
+    } catch (error) {
+      console.error('Error handling attendance change:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update attendance',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const handleCsvImport = (importedStudents: Omit<Student, 'id'>[], updateExisting: boolean) => {
+  const handleBulkAttendanceChange = async (studentIds: string[], status: AttendanceStatus) => {
+    try {
+      const updates = [];
+      const inserts = [];
+      
+      for (const studentId of studentIds) {
+        const existingRecordIndex = attendanceRecords.findIndex(
+          record => record.studentId === studentId && record.date === selectedDateString
+        );
+
+        if (existingRecordIndex >= 0) {
+          // Update existing record
+          updates.push({
+            id: attendanceRecords[existingRecordIndex].id,
+            status
+          });
+        } else {
+          // Create new record
+          inserts.push({
+            student_id: studentId,
+            date: selectedDateString,
+            status
+          });
+        }
+      }
+
+      // Handle updates
+      if (updates.length > 0) {
+        for (const update of updates) {
+          const { error } = await supabase
+            .from('attendance')
+            .update({ status: update.status })
+            .eq('id', update.id);
+
+          if (error) {
+            console.error('Error updating attendance:', error);
+            toast({
+              title: 'Error',
+              description: 'Failed to update some attendance records',
+              variant: 'destructive',
+            });
+            return;
+          }
+        }
+      }
+
+      // Handle inserts
+      if (inserts.length > 0) {
+        const { error } = await supabase
+          .from('attendance')
+          .insert(inserts);
+
+        if (error) {
+          console.error('Error creating attendance:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to create some attendance records',
+            variant: 'destructive',
+          });
+          return;
+        }
+      }
+
+      // Update local state
+      const updatedRecords = [...attendanceRecords];
+      
+      studentIds.forEach(studentId => {
+        const existingRecordIndex = updatedRecords.findIndex(
+          record => record.studentId === studentId && record.date === selectedDateString
+        );
+
+        if (existingRecordIndex >= 0) {
+          // Update existing record
+          updatedRecords[existingRecordIndex] = {
+            ...updatedRecords[existingRecordIndex],
+            status
+          };
+        } else {
+          // Create new record
+          const newRecord: Attendance = {
+            id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${studentId}`,
+            studentId,
+            date: selectedDateString,
+            status
+          };
+          updatedRecords.push(newRecord);
+        }
+      });
+      
+      setAttendanceRecords(updatedRecords);
+      
+      toast({
+        title: 'Success',
+        description: `Updated attendance for ${studentIds.length} students`,
+      });
+
+      // Reload attendance to get correct IDs
+      setTimeout(loadAttendance, 100);
+    } catch (error) {
+      console.error('Error handling bulk attendance change:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update attendance records',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleCsvImport = async (importedStudents: Omit<Student, 'id'>[], updateExisting: boolean) => {
     const updatedStudents = [...students];
     let newCount = 0;
     let updateCount = 0;
 
-    importedStudents.forEach(importedStudent => {
-      const existingIndex = updatedStudents.findIndex(
-        s => s.studentId.toLowerCase() === importedStudent.studentId.toLowerCase()
-      );
+    try {
+      for (const importedStudent of importedStudents) {
+        const existingIndex = updatedStudents.findIndex(
+          s => s.studentId.toLowerCase() === importedStudent.studentId.toLowerCase()
+        );
 
-      if (existingIndex >= 0) {
-        if (updateExisting) {
-          updatedStudents[existingIndex] = {
-            ...updatedStudents[existingIndex],
-            ...importedStudent
+        if (existingIndex >= 0) {
+          if (updateExisting) {
+            // Update existing student in database
+            const { error } = await supabase
+              .from('students')
+              .update({
+                full_name: importedStudent.fullName,
+                email: importedStudent.email,
+                phone: importedStudent.phone
+              })
+              .eq('id', updatedStudents[existingIndex].id);
+
+            if (error) {
+              console.error('Error updating student:', error);
+              continue;
+            }
+
+            updatedStudents[existingIndex] = {
+              ...updatedStudents[existingIndex],
+              ...importedStudent
+            };
+            updateCount++;
+          }
+        } else {
+          // Add new student to database
+          const { data, error } = await supabase
+            .from('students')
+            .insert({
+              full_name: importedStudent.fullName,
+              student_id: importedStudent.studentId,
+              email: importedStudent.email,
+              phone: importedStudent.phone
+            })
+            .select()
+            .single();
+
+          if (error) {
+            console.error('Error adding student:', error);
+            continue;
+          }
+
+          const newStudent: Student = {
+            id: data.id,
+            fullName: data.full_name,
+            studentId: data.student_id,
+            email: data.email,
+            phone: data.phone
           };
-          updateCount++;
+          updatedStudents.push(newStudent);
+          newCount++;
         }
-      } else {
-        const newStudent: Student = {
-          ...importedStudent,
-          id: `student-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-        };
-        updatedStudents.push(newStudent);
-        newCount++;
       }
-    });
 
-    setStudents(updatedStudents);
-    
-    toast({
-      title: "Import Complete",
-      description: `Added ${newCount} new students${updateCount > 0 ? ` and updated ${updateCount} existing students` : ''}.`,
-    });
+      setStudents(updatedStudents);
+      
+      toast({
+        title: "Import Complete",
+        description: `Added ${newCount} new students${updateCount > 0 ? ` and updated ${updateCount} existing students` : ''}.`,
+      });
+    } catch (error) {
+      console.error('Error importing students:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to import some students',
+        variant: 'destructive',
+      });
+    }
   };
 
   // Create attendance records with student data for export
@@ -135,6 +413,17 @@ const Index = () => {
       phone: ''
     }
   }));
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <GraduationCap className="h-12 w-12 text-primary mx-auto animate-pulse" />
+          <p className="text-muted-foreground">Loading attendance data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -157,7 +446,7 @@ const Index = () => {
                 Export CSV
               </Button>
               <span className="text-sm text-primary-foreground/80">
-                Welcome, {user?.email}
+                Welcome, {profile?.full_name} ({profile?.role})
               </span>
               <Button
                 onClick={signOut}
