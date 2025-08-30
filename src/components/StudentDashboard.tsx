@@ -30,11 +30,28 @@ export default function StudentDashboard() {
     if (!profile?.full_name) return;
 
     try {
-      const { data, error } = await supabase
+      // Try multiple matching strategies to find the student record
+      const profileName = profile.full_name.trim().toLowerCase();
+      
+      // First try exact match
+      let { data, error } = await supabase
         .from('students')
         .select('*')
         .ilike('full_name', profile.full_name.trim())
         .maybeSingle();
+
+      // If no exact match, try partial matching
+      if (!data && !error) {
+        const { data: partialData, error: partialError } = await supabase
+          .from('students')
+          .select('*')
+          .or(`full_name.ilike.%${profileName}%,full_name.ilike.${profileName}%`)
+          .limit(1)
+          .maybeSingle();
+        
+        data = partialData;
+        error = partialError;
+      }
 
       if (error) {
         console.error('Error fetching student data:', error);
@@ -62,6 +79,7 @@ export default function StudentDashboard() {
     if (!profile?.full_name) return;
 
     try {
+      // Use a simpler approach that works with our improved RLS policies
       const { data, error } = await supabase
         .from('attendance')
         .select(`
@@ -69,10 +87,8 @@ export default function StudentDashboard() {
           date,
           status,
           note,
-          student_id,
-          students!inner(full_name)
+          student_id
         `)
-        .eq('students.full_name', profile.full_name)
         .order('date', { ascending: false });
 
       if (error) {
