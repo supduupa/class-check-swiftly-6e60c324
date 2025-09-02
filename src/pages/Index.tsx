@@ -8,6 +8,7 @@ import { AddStudentDialog } from "@/components/AddStudentDialog";
 import { CsvImportDialog } from "@/components/CsvImportDialog";
 import { CsvExportDialog } from "@/components/CsvExportDialog";
 import { DailySummary } from "@/components/DailySummary";
+import RoleManagement from "@/components/RoleManagement";
 import { Student, Attendance, AttendanceStatus, AttendanceRecord } from "@/types/attendance";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -476,7 +477,7 @@ const Index = () => {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 space-y-6">
         <DailySummary
           students={students}
           attendanceRecords={attendanceRecords}
@@ -496,6 +497,8 @@ const Index = () => {
             />
           </div>
         </Card>
+
+        <RoleManagement />
       </div>
 
       {/* Add Student Dialog */}
