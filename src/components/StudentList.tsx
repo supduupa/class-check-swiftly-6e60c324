@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { AttendanceStatus } from "./AttendanceStatus";
 import { Student, Attendance, AttendanceStatus as Status } from "@/types/attendance";
-import { Search, UserPlus, Check, Users, Upload } from "lucide-react";
+import { Search, UserPlus, Check, Users, Upload, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -20,6 +20,7 @@ interface StudentListProps {
   onDeleteAttendance: (studentId: string) => void;
   onAddStudent: () => void;
   onImportStudents: () => void;
+  onDeleteStudent: (studentId: string) => void;
 }
 
 export function StudentList({ 
@@ -30,7 +31,8 @@ export function StudentList({
   onBulkAttendanceChange,
   onDeleteAttendance,
   onAddStudent,
-  onImportStudents 
+  onImportStudents,
+  onDeleteStudent 
 }: StudentListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
@@ -282,6 +284,34 @@ export function StudentList({
                         onChange={(status) => onAttendanceChange(student.id, status)}
                         onDelete={() => onDeleteAttendance(student.id)}
                       />
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="text-destructive hover:bg-destructive/10 hover:border-destructive/20"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Student</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete {student.fullName}? This will permanently remove the student and all their attendance records. This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => onDeleteStudent(student.id)}
+                              className="bg-destructive hover:bg-destructive/90"
+                            >
+                              Delete Student
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 </Card>

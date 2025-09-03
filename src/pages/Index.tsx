@@ -371,6 +371,58 @@ const Index = () => {
     }
   };
 
+  const handleDeleteStudent = async (studentId: string) => {
+    try {
+      // First delete all attendance records for this student
+      const { error: attendanceError } = await supabase
+        .from('attendance')
+        .delete()
+        .eq('student_id', studentId);
+
+      if (attendanceError) {
+        console.error('Error deleting student attendance:', attendanceError);
+        toast({
+          title: 'Error',
+          description: 'Failed to delete student attendance records',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Then delete the student
+      const { error: studentError } = await supabase
+        .from('students')
+        .delete()
+        .eq('id', studentId);
+
+      if (studentError) {
+        console.error('Error deleting student:', studentError);
+        toast({
+          title: 'Error',
+          description: 'Failed to delete student',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Update local state
+      setStudents(prev => prev.filter(student => student.id !== studentId));
+      setAttendanceRecords(prev => prev.filter(record => record.studentId !== studentId));
+
+      toast({
+        title: 'Success',
+        description: 'Student and all associated attendance records have been deleted',
+      });
+    } catch (error) {
+      console.error('Error deleting student:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete student',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleCsvImport = async (importedStudents: Omit<Student, 'id'>[], updateExisting: boolean) => {
     const updatedStudents = [...students];
     let newCount = 0;
@@ -534,16 +586,17 @@ const Index = () => {
         
         <Card className="shadow-lg">
           <div className="p-6">
-            <StudentList
-              students={students}
-              attendanceRecords={attendanceRecords}
-              selectedDate={selectedDateString}
-              onAttendanceChange={handleAttendanceChange}
-              onBulkAttendanceChange={handleBulkAttendanceChange}
-              onDeleteAttendance={handleDeleteAttendance}
-              onAddStudent={() => setShowAddStudent(true)}
-              onImportStudents={() => setShowCsvImport(true)}
-            />
+              <StudentList
+                students={students}
+                attendanceRecords={attendanceRecords}
+                selectedDate={selectedDateString}
+                onAttendanceChange={handleAttendanceChange}
+                onBulkAttendanceChange={handleBulkAttendanceChange}
+                onDeleteAttendance={handleDeleteAttendance}
+                onAddStudent={() => setShowAddStudent(true)}
+                onImportStudents={() => setShowCsvImport(true)}
+                onDeleteStudent={handleDeleteStudent}
+              />
           </div>
         </Card>
 
