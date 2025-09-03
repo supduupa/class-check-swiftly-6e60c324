@@ -125,7 +125,8 @@ export default function RoleManagement() {
               <div className="flex items-center gap-3">
                 <div>
                   <p className="font-medium">{user.full_name}</p>
-                  <p className="text-sm text-muted-foreground">ID: {user.id.slice(0, 8)}...</p>
+                  <p className="text-sm text-muted-foreground">{user.email || 'No email'}</p>
+                  <p className="text-xs text-muted-foreground">ID: {user.id.slice(0, 8)}...</p>
                 </div>
                 <Badge variant={getRoleBadgeVariant(user.role)}>
                   {user.role}
