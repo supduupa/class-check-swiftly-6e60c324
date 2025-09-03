@@ -215,6 +215,54 @@ const Index = () => {
     }
   };
 
+  const handleDeleteAttendance = async (studentId: string) => {
+    try {
+      const existingRecord = attendanceRecords.find(
+        record => record.studentId === studentId && record.date === selectedDateString
+      );
+
+      if (!existingRecord) {
+        toast({
+          title: 'Notice',
+          description: 'No attendance record found to delete',
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('attendance')
+        .delete()
+        .eq('id', existingRecord.id);
+
+      if (error) {
+        console.error('Error deleting attendance:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to delete attendance record',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Remove from local state
+      setAttendanceRecords(prev => 
+        prev.filter(record => record.id !== existingRecord.id)
+      );
+
+      toast({
+        title: 'Success',
+        description: 'Attendance record deleted',
+      });
+    } catch (error) {
+      console.error('Error deleting attendance:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete attendance record',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleBulkAttendanceChange = async (studentIds: string[], status: AttendanceStatus) => {
     try {
       const updates = [];
@@ -492,6 +540,7 @@ const Index = () => {
               selectedDate={selectedDateString}
               onAttendanceChange={handleAttendanceChange}
               onBulkAttendanceChange={handleBulkAttendanceChange}
+              onDeleteAttendance={handleDeleteAttendance}
               onAddStudent={() => setShowAddStudent(true)}
               onImportStudents={() => setShowCsvImport(true)}
             />

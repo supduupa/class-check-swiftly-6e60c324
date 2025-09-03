@@ -17,6 +17,7 @@ interface StudentListProps {
   selectedDate: string;
   onAttendanceChange: (studentId: string, status: Status) => void;
   onBulkAttendanceChange: (studentIds: string[], status: Status) => void;
+  onDeleteAttendance: (studentId: string) => void;
   onAddStudent: () => void;
   onImportStudents: () => void;
 }
@@ -27,6 +28,7 @@ export function StudentList({
   selectedDate, 
   onAttendanceChange,
   onBulkAttendanceChange,
+  onDeleteAttendance,
   onAddStudent,
   onImportStudents 
 }: StudentListProps) {
@@ -274,10 +276,13 @@ export function StudentList({
                         )}
                       </div>
                     </div>
-                    <AttendanceStatus
-                      status={currentStatus}
-                      onChange={(status) => onAttendanceChange(student.id, status)}
-                    />
+                    <div className="flex items-center gap-2">
+                      <AttendanceStatus
+                        status={currentStatus}
+                        onChange={(status) => onAttendanceChange(student.id, status)}
+                        onDelete={() => onDeleteAttendance(student.id)}
+                      />
+                    </div>
                   </div>
                 </Card>
               );
