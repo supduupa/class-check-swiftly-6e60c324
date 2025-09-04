@@ -39,6 +39,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (error) {
         console.error('Error fetching profile:', error);
+        
+        // Handle JWT expiration by signing out
+        if (error.code === 'PGRST301' || error.code === 'PGRST303' || error.message?.includes('JWT')) {
+          console.log('JWT expired, signing out...');
+          await supabase.auth.signOut();
+          return null;
+        }
+        
         return null;
       }
       
