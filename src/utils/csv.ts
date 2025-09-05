@@ -67,13 +67,35 @@ export function validateAndParseStudents(
     return { students, errors };
   }
 
-  const headers = csvRows[0].map(h => h.toLowerCase().trim());
+  const headers = csvRows[0].map(h => h.toLowerCase().trim().replace(/[^a-z]/g, ''));
   const expectedHeaders = ['studentid', 'fullname', 'email', 'phone'];
   
-  // Validate headers
-  const missingHeaders = expectedHeaders.filter(header => 
-    !headers.includes(header)
-  );
+  // More flexible header matching
+  const headerMappings = {
+    'studentid': ['studentid', 'student_id', 'id', 'studentnumber', 'student_number'],
+    'fullname': ['fullname', 'full_name', 'name', 'studentname', 'student_name'],
+    'email': ['email', 'emailaddress', 'email_address'],
+    'phone': ['phone', 'phonenumber', 'phone_number', 'mobile', 'contact']
+  };
+  
+  // Find actual header positions with flexible matching
+  const findHeaderIndex = (expectedHeader: string) => {
+    const possibleNames = headerMappings[expectedHeader as keyof typeof headerMappings];
+    for (const possibleName of possibleNames) {
+      const index = headers.indexOf(possibleName);
+      if (index !== -1) return index;
+    }
+    return -1;
+  };
+  // Validate headers using flexible matching
+  const studentIdIndex = findHeaderIndex('studentid');
+  const fullNameIndex = findHeaderIndex('fullname');
+  const emailIndex = findHeaderIndex('email');
+  const phoneIndex = findHeaderIndex('phone');
+  
+  const missingHeaders = [];
+  if (studentIdIndex === -1) missingHeaders.push('studentId (or student_id, id)');
+  if (fullNameIndex === -1) missingHeaders.push('fullName (or full_name, name)');
   
   if (missingHeaders.length > 0) {
     errors.push({
@@ -84,11 +106,6 @@ export function validateAndParseStudents(
     return { students, errors };
   }
 
-  const studentIdIndex = headers.indexOf('studentid');
-  const fullNameIndex = headers.indexOf('fullname');
-  const emailIndex = headers.indexOf('email');
-  const phoneIndex = headers.indexOf('phone');
-
   const existingStudentIds = new Set(existingStudents.map(s => s.studentId.toLowerCase()));
   const seenStudentIds = new Set<string>();
 
@@ -97,19 +114,21 @@ export function validateAndParseStudents(
     const row = csvRows[i];
     const rowNumber = i + 1;
 
-    if (row.length < expectedHeaders.length) {
+    // Check if row has the minimum required columns (at least studentId and fullName)
+    if (row.length < 2 || studentIdIndex === -1 || fullNameIndex === -1 || 
+        !row[studentIdIndex]?.trim() || !row[fullNameIndex]?.trim()) {
       errors.push({
         row: rowNumber,
         field: 'row',
-        message: 'Row has insufficient columns'
+        message: 'Row missing required data (studentId and fullName)'
       });
       continue;
     }
 
     const studentId = row[studentIdIndex]?.trim();
     const fullName = row[fullNameIndex]?.trim();
-    const email = row[emailIndex]?.trim();
-    const phone = row[phoneIndex]?.trim();
+    const email = emailIndex !== -1 ? row[emailIndex]?.trim() : '';
+    const phone = phoneIndex !== -1 ? row[phoneIndex]?.trim() : '';
 
     // Validate required fields
     if (!studentId) {
