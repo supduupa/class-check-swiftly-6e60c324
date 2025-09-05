@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Student } from "@/types/attendance";
-import { parseCsvFile, validateAndParseStudents, CsvValidationError } from "@/utils/csv";
+import { parseFile, validateAndParseStudents, CsvValidationError } from "@/utils/csv";
 import { Upload, FileText, AlertCircle, CheckCircle, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -35,10 +35,11 @@ export function CsvImportDialog({
     const selectedFile = event.target.files?.[0];
     if (!selectedFile) return;
 
-    if (!selectedFile.name.toLowerCase().endsWith('.csv')) {
+    const fileName = selectedFile.name.toLowerCase();
+    if (!fileName.endsWith('.csv') && !fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
       toast({
         title: "Invalid File",
-        description: "Please select a CSV file.",
+        description: "Please select a CSV or Excel file.",
         variant: "destructive"
       });
       return;
@@ -48,8 +49,8 @@ export function CsvImportDialog({
     setIsProcessing(true);
 
     try {
-      const csvRows = await parseCsvFile(selectedFile);
-      const result = validateAndParseStudents(csvRows, existingStudents);
+      const fileRows = await parseFile(selectedFile);
+      const result = validateAndParseStudents(fileRows, existingStudents);
       
       setParsedStudents(result.students);
       setErrors(result.errors);
@@ -97,21 +98,21 @@ export function CsvImportDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
-            Import Students from CSV
+            Import Students from File
           </DialogTitle>
           <DialogDescription>
-            Upload a CSV file with student data. Expected headers: studentId, fullName, email, phone
+            Upload a CSV or Excel file with student data. Expected headers: studentId, fullName, email, phone
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* File Upload */}
           <div className="space-y-2">
-            <Label htmlFor="csv-file">Select CSV File</Label>
+            <Label htmlFor="file-input">Select CSV or Excel File</Label>
             <Input
-              id="csv-file"
+              id="file-input"
               type="file"
-              accept=".csv"
+              accept=".csv,.xlsx,.xls"
               onChange={handleFileChange}
               disabled={isProcessing}
             />
@@ -121,13 +122,16 @@ export function CsvImportDialog({
           <Card className="p-4 bg-muted/50">
             <h4 className="font-medium mb-2 flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              Expected CSV Format:
+              Expected Format:
             </h4>
-            <code className="text-sm block bg-background p-2 rounded border">
-              studentId,fullName,email,phone<br/>
-              S001,John Doe,john@example.com,555-0123<br/>
-              S002,Jane Smith,jane@example.com,555-0456
-            </code>
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">CSV or Excel file with these columns:</p>
+              <code className="text-sm block bg-background p-2 rounded border">
+                studentId,fullName,email,phone<br/>
+                S001,John Doe,john@example.com,555-0123<br/>
+                S002,Jane Smith,jane@example.com,555-0456
+              </code>
+            </div>
           </Card>
 
           {/* Processing State */}
@@ -135,7 +139,7 @@ export function CsvImportDialog({
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Processing CSV file...
+                Processing file...
               </AlertDescription>
             </Alert>
           )}

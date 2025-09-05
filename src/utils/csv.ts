@@ -1,4 +1,5 @@
 import { Student, Attendance, AttendanceRecord } from "@/types/attendance";
+import * as XLSX from 'xlsx';
 
 export interface CsvValidationError {
   row: number;
@@ -11,48 +12,86 @@ export interface CsvImportResult {
   errors: CsvValidationError[];
 }
 
-export function parseCsvFile(file: File): Promise<string[][]> {
+export function parseFile(file: File): Promise<string[][]> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
+    const fileName = file.name.toLowerCase();
+    
     reader.onload = (event) => {
       try {
-        const csv = event.target?.result as string;
-        const rows = csv.split('\n')
-          .map(row => row.trim())
-          .filter(row => row.length > 0)
-          .map(row => {
-            // Simple CSV parsing - handles basic cases
-            const fields: string[] = [];
-            let current = '';
-            let inQuotes = false;
-            
-            for (let i = 0; i < row.length; i++) {
-              const char = row[i];
-              if (char === '"') {
-                inQuotes = !inQuotes;
-              } else if (char === ',' && !inQuotes) {
-                fields.push(current.trim());
-                current = '';
-              } else {
-                current += char;
+        if (fileName.endsWith('.csv')) {
+          // Parse CSV file
+          const csv = event.target?.result as string;
+          const rows = csv.split('\n')
+            .map(row => row.trim())
+            .filter(row => row.length > 0)
+            .map(row => {
+              // Simple CSV parsing - handles basic cases
+              const fields: string[] = [];
+              let current = '';
+              let inQuotes = false;
+              
+              for (let i = 0; i < row.length; i++) {
+                const char = row[i];
+                if (char === '"') {
+                  inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                  fields.push(current.trim());
+                  current = '';
+                } else {
+                  current += char;
+                }
               }
-            }
-            fields.push(current.trim());
-            
-            return fields.map(field => 
-              field.startsWith('"') && field.endsWith('"') 
-                ? field.slice(1, -1) 
-                : field
-            );
-          });
-        resolve(rows);
+              fields.push(current.trim());
+              
+              return fields.map(field => 
+                field.startsWith('"') && field.endsWith('"') 
+                  ? field.slice(1, -1) 
+                  : field
+              );
+            });
+          resolve(rows);
+        } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+          // Parse Excel file
+          const data = event.target?.result as ArrayBuffer;
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          
+          // Convert to array of arrays
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
+            header: 1,
+            defval: '',
+            raw: false
+          }) as string[][];
+          
+          // Filter out empty rows
+          const filteredRows = jsonData
+            .filter(row => row.some(cell => cell && cell.toString().trim() !== ''))
+            .map(row => row.map(cell => cell ? cell.toString().trim() : ''));
+          
+          resolve(filteredRows);
+        } else {
+          reject(new Error('Unsupported file format'));
+        }
       } catch (error) {
-        reject(new Error('Failed to parse CSV file'));
+        reject(new Error(`Failed to parse ${fileName.endsWith('.csv') ? 'CSV' : 'Excel'} file`));
       }
     };
+    
     reader.onerror = () => reject(new Error('Failed to read file'));
-    reader.readAsText(file);
+    
+    if (fileName.endsWith('.csv')) {
+      reader.readAsText(file);
+    } else {
+      reader.readAsArrayBuffer(file);
+    }
   });
+}
+
+// Keep the old function for backward compatibility
+export function parseCsvFile(file: File): Promise<string[][]> {
+  return parseFile(file);
 }
 
 export function validateAndParseStudents(
