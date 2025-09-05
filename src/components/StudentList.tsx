@@ -101,6 +101,20 @@ export function StudentList({
     });
   };
 
+  const handleBulkDelete = () => {
+    const selectedIds = Array.from(selectedStudents);
+    if (selectedIds.length === 0) return;
+
+    selectedIds.forEach(studentId => {
+      onDeleteStudent(studentId);
+    });
+    setSelectedStudents(new Set());
+    toast({
+      title: "Students Deleted",
+      description: `Successfully deleted ${selectedIds.length} student${selectedIds.length > 1 ? 's' : ''}.`,
+    });
+  };
+
   const isAllSelected = filteredStudents.length > 0 && selectedStudents.size === filteredStudents.length;
   const isIndeterminate = selectedStudents.size > 0 && selectedStudents.size < filteredStudents.length;
 
@@ -218,6 +232,35 @@ export function StudentList({
               >
                 Mark Excused
               </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="bg-destructive hover:bg-destructive/90"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Delete All
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Selected Students</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete {selectedStudents.size} selected student{selectedStudents.size > 1 ? 's' : ''}? This will permanently remove the student{selectedStudents.size > 1 ? 's' : ''} and all their attendance records. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleBulkDelete}
+                      className="bg-destructive hover:bg-destructive/90"
+                    >
+                      Delete All
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         </Card>
