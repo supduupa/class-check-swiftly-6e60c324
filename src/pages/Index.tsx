@@ -263,6 +263,74 @@ const Index = () => {
     }
   };
 
+  const handleUpdateNote = async (studentId: string, note: string) => {
+    try {
+      const existingRecordIndex = attendanceRecords.findIndex(
+        record => record.studentId === studentId && record.date === selectedDateString
+      );
+
+      if (existingRecordIndex >= 0) {
+        // Update existing record
+        const recordId = attendanceRecords[existingRecordIndex].id;
+        const { error } = await supabase
+          .from('attendance')
+          .update({ note })
+          .eq('id', recordId);
+
+        if (error) {
+          console.error('Error updating note:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to update note',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        const updatedRecords = [...attendanceRecords];
+        updatedRecords[existingRecordIndex] = {
+          ...updatedRecords[existingRecordIndex],
+          note
+        };
+        setAttendanceRecords(updatedRecords);
+      } else {
+        // Create new record with default status and note
+        const { data, error } = await supabase
+          .from('attendance')
+          .insert({
+            student_id: studentId,
+            date: selectedDateString,
+            status: 'Absent',
+            note
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error creating attendance with note:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to save note',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        const newRecord: Attendance = {
+          id: data.id,
+          studentId: data.student_id,
+          date: data.date,
+          status: data.status,
+          note: data.note
+        };
+
+        setAttendanceRecords(prev => [...prev, newRecord]);
+      }
+    } catch (error) {
+      console.error('Error updating note:', error);
+    }
+  };
+
   const handleBulkAttendanceChange = async (studentIds: string[], status: AttendanceStatus) => {
     try {
       const updates = [];
@@ -596,6 +664,7 @@ const Index = () => {
                 onAddStudent={() => setShowAddStudent(true)}
                 onImportStudents={() => setShowCsvImport(true)}
                 onDeleteStudent={handleDeleteStudent}
+                onUpdateNote={handleUpdateNote}
               />
           </div>
         </Card>

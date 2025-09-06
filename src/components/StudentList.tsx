@@ -4,10 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { AttendanceStatus } from "./AttendanceStatus";
 import { Student, Attendance, AttendanceStatus as Status } from "@/types/attendance";
-import { Search, UserPlus, Check, Users, Upload, Trash2 } from "lucide-react";
+import { Search, UserPlus, Check, Users, Upload, Trash2, StickyNote } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -21,6 +23,7 @@ interface StudentListProps {
   onAddStudent: () => void;
   onImportStudents: () => void;
   onDeleteStudent: (studentId: string) => void;
+  onUpdateNote: (studentId: string, note: string) => void;
 }
 
 export function StudentList({ 
@@ -32,10 +35,14 @@ export function StudentList({
   onDeleteAttendance,
   onAddStudent,
   onImportStudents,
-  onDeleteStudent 
+  onDeleteStudent,
+  onUpdateNote
 }: StudentListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
+  const [noteSheetOpen, setNoteSheetOpen] = useState(false);
+  const [selectedStudentForNote, setSelectedStudentForNote] = useState<Student | null>(null);
+  const [noteText, setNoteText] = useState("");
   const { toast } = useToast();
 
   const filteredStudents = students.filter(student =>
@@ -48,6 +55,39 @@ export function StudentList({
       r => r.studentId === studentId && r.date === selectedDate
     );
     return record?.status || 'Absent'; // Default to Absent
+  };
+
+  const getAttendanceNote = (studentId: string): string => {
+    const record = attendanceRecords.find(
+      r => r.studentId === studentId && r.date === selectedDate
+    );
+    return record?.note || '';
+  };
+
+  const handleRowClick = (student: Student, event: React.MouseEvent) => {
+    // Don't open if clicking on interactive elements
+    const target = event.target as HTMLElement;
+    if (target.closest('button') || target.closest('input') || target.closest('[role="button"]')) {
+      return;
+    }
+    
+    setSelectedStudentForNote(student);
+    setNoteText(getAttendanceNote(student.id));
+    setNoteSheetOpen(true);
+  };
+
+  const handleSaveNote = async () => {
+    if (!selectedStudentForNote) return;
+    
+    await onUpdateNote(selectedStudentForNote.id, noteText);
+    setNoteSheetOpen(false);
+    setSelectedStudentForNote(null);
+    setNoteText("");
+    
+    toast({
+      title: "Note Updated",
+      description: `Note updated for ${selectedStudentForNote.fullName}`,
+    });
   };
 
   const getStatusCount = (status: Status) => {
@@ -293,9 +333,17 @@ export function StudentList({
             
             {filteredStudents.map((student) => {
               const currentStatus = getAttendanceStatus(student.id);
+              const currentNote = getAttendanceNote(student.id);
               const isSelected = selectedStudents.has(student.id);
               return (
-                <Card key={student.id} className={cn("p-4", isSelected && "bg-accent/50 border-primary/50")}>
+                <Card 
+                  key={student.id} 
+                  className={cn(
+                    "p-4 cursor-pointer transition-colors hover:bg-accent/30", 
+                    isSelected && "bg-accent/50 border-primary/50"
+                  )}
+                  onClick={(e) => handleRowClick(student, e)}
+                >
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <Checkbox
@@ -310,6 +358,11 @@ export function StudentList({
                           <Badge variant="outline" className="text-xs">
                             {student.studentId}
                           </Badge>
+                          {currentNote && (
+                            <div title="Has note">
+                              <StickyNote className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          )}
                         </div>
                         {(student.email || student.phone) && (
                           <p className="text-sm text-muted-foreground mt-1 truncate">
@@ -317,6 +370,11 @@ export function StudentList({
                               ? `${student.email} • ${student.phone}`
                               : student.email || student.phone
                             }
+                          </p>
+                        )}
+                        {currentNote && (
+                          <p className="text-xs text-muted-foreground mt-1 truncate italic">
+                            "{currentNote}"
                           </p>
                         )}
                       </div>
@@ -368,6 +426,43 @@ export function StudentList({
       <div className="text-center text-sm text-muted-foreground">
         Showing {filteredStudents.length} of {students.length} students
       </div>
+
+      {/* Note Sheet */}
+      <Sheet open={noteSheetOpen} onOpenChange={setNoteSheetOpen}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Add Note for {selectedStudentForNote?.fullName}</SheetTitle>
+            <SheetDescription>
+              Add a note for {selectedDate} attendance (e.g., "medical excuse", "family emergency")
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div>
+              <label htmlFor="note" className="text-sm font-medium">Note</label>
+              <Textarea
+                id="note"
+                placeholder="Enter attendance note..."
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+                className="mt-1"
+                rows={4}
+              />
+            </div>
+            <div className="flex gap-2 pt-4">
+              <Button onClick={handleSaveNote} className="flex-1">
+                Save Note
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setNoteSheetOpen(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
