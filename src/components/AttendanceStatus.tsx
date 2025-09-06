@@ -48,25 +48,25 @@ export function AttendanceStatus({ status, onChange, onDelete, className }: Atte
   };
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-2">
       <Button
         onClick={handleClick}
         className={cn(
-          "min-w-[80px] font-medium transition-all duration-200",
+          "min-w-[90px] sm:min-w-[100px] min-h-[44px] font-medium transition-all duration-200 shadow-sm hover:shadow-md border-2 active:scale-95",
           currentConfig.color,
           className
         )}
-        size="sm"
+        size="mobile"
       >
-        <span className="sm:hidden">{currentConfig.shortLabel}</span>
-        <span className="hidden sm:inline">{currentConfig.label}</span>
+        <span className="sm:hidden text-base font-semibold">{currentConfig.shortLabel}</span>
+        <span className="hidden sm:flex text-sm">{currentConfig.label}</span>
       </Button>
       {isStaff && onDelete && (
         <Button
           onClick={onDelete}
           variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+          size="icon"
+          className="h-10 w-10 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors duration-200 min-h-[44px]"
           title="Delete attendance record"
         >
           <X className="h-4 w-4" />

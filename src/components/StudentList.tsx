@@ -161,74 +161,85 @@ export function StudentList({
   return (
     <div className="space-y-6">
       {/* Header with search and add student */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            placeholder="Search students..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <div className="flex gap-2">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" className="bg-status-present hover:bg-status-present-hover text-status-present-foreground">
-                <Check className="h-4 w-4 mr-2" />
-                Mark All Present
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Mark All Present</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to mark all {students.length} students as Present for {selectedDate}?
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleMarkAllPresent}>
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Search students..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 h-12"
+            />
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="mobile"
+                  className="bg-status-present hover:bg-status-present-hover text-status-present-foreground min-h-[44px]"
+                >
+                  <Check className="h-4 w-4 mr-2" />
                   Mark All Present
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-          <Button 
-            onClick={onImportStudents}
-            variant="outline" 
-            className="border-primary/20 hover:bg-primary/5"
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            Import CSV
-          </Button>
-          <Button onClick={onAddStudent} className="bg-primary hover:bg-primary/90">
-            <UserPlus className="h-4 w-4 mr-2" />
-            Add Student
-          </Button>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Mark All Present</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to mark all {students.length} students as Present for {selectedDate}?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleMarkAllPresent}>
+                    Mark All Present
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+            <Button 
+              onClick={onImportStudents}
+              variant="outline" 
+              size="mobile"
+              className="border-primary/20 hover:bg-primary/5 min-h-[44px]"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Import
+            </Button>
+            <Button 
+              onClick={onAddStudent} 
+              size="mobile"
+              className="bg-primary hover:bg-primary/90 min-h-[44px]"
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              Add Student
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Status Summary */}
-      <Card className="p-4">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="text-center">
-            <Badge variant="secondary" className="bg-status-present text-status-present-foreground">
+      <Card className="p-4 bg-gradient-mobile">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="text-center p-2">
+            <Badge variant="secondary" className="bg-status-present text-status-present-foreground text-xs sm:text-sm px-2 py-1">
               Present: {statusSummary.Present}
             </Badge>
           </div>
-          <div className="text-center">
-            <Badge variant="secondary" className="bg-status-late text-status-late-foreground">
+          <div className="text-center p-2">
+            <Badge variant="secondary" className="bg-status-late text-status-late-foreground text-xs sm:text-sm px-2 py-1">
               Late: {statusSummary.Late}
             </Badge>
           </div>
-          <div className="text-center">
-            <Badge variant="secondary" className="bg-status-absent text-status-absent-foreground">
+          <div className="text-center p-2">
+            <Badge variant="secondary" className="bg-status-absent text-status-absent-foreground text-xs sm:text-sm px-2 py-1">
               Absent: {statusSummary.Absent}
             </Badge>
           </div>
-          <div className="text-center">
-            <Badge variant="secondary" className="bg-status-excused text-status-excused-foreground">
+          <div className="text-center p-2">
+            <Badge variant="secondary" className="bg-status-excused text-status-excused-foreground text-xs sm:text-sm px-2 py-1">
               Excused: {statusSummary.Excused}
             </Badge>
           </div>
@@ -237,50 +248,50 @@ export function StudentList({
 
       {/* Bulk Actions */}
       {selectedStudents.size > 0 && (
-        <Card className="p-4">
-          <div className="flex flex-col sm:flex-row gap-3 items-center">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Card className="p-4 bg-accent/30 border-primary/20">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
               <Users className="h-4 w-4" />
               {selectedStudents.size} student{selectedStudents.size > 1 ? 's' : ''} selected
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2">
               <Button
-                size="sm"
+                size="mobile"
                 onClick={() => handleBulkAction('Present')}
-                className="bg-status-present hover:bg-status-present-hover text-status-present-foreground"
+                className="bg-status-present hover:bg-status-present-hover text-status-present-foreground text-sm"
               >
-                Mark Present
+                Present
               </Button>
               <Button
-                size="sm"
+                size="mobile"
                 onClick={() => handleBulkAction('Late')}
-                className="bg-status-late hover:bg-status-late-hover text-status-late-foreground"
+                className="bg-status-late hover:bg-status-late-hover text-status-late-foreground text-sm"
               >
-                Mark Late
+                Late
               </Button>
               <Button
-                size="sm"
+                size="mobile"
                 onClick={() => handleBulkAction('Absent')}
-                className="bg-status-absent hover:bg-status-absent-hover text-status-absent-foreground"
+                className="bg-status-absent hover:bg-status-absent-hover text-status-absent-foreground text-sm"
               >
-                Mark Absent
+                Absent
               </Button>
               <Button
-                size="sm"
+                size="mobile"
                 onClick={() => handleBulkAction('Excused')}
-                className="bg-status-excused hover:bg-status-excused-hover text-status-excused-foreground"
+                className="bg-status-excused hover:bg-status-excused-hover text-status-excused-foreground text-sm"
               >
-                Mark Excused
+                Excused
               </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
-                    size="sm"
+                    size="mobile"
                     variant="destructive"
-                    className="bg-destructive hover:bg-destructive/90"
+                    className="bg-destructive hover:bg-destructive/90 text-sm"
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
-                    Delete All
+                    Delete
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -316,16 +327,19 @@ export function StudentList({
           <>
             {/* Select All Checkbox */}
             {filteredStudents.length > 0 && (
-              <Card className="p-4 bg-muted/50">
+              <Card className="p-4 bg-muted/30 border-dashed border-muted-foreground/20">
                 <div className="flex items-center gap-3">
                   <Checkbox
                     id="select-all"
                     checked={isAllSelected}
                     onCheckedChange={handleSelectAll}
-                    className={cn(isIndeterminate && "data-[state=checked]:bg-muted-foreground")}
+                    className={cn(
+                      "h-5 w-5", 
+                      isIndeterminate && "data-[state=checked]:bg-muted-foreground"
+                    )}
                   />
-                  <label htmlFor="select-all" className="text-sm font-medium cursor-pointer">
-                    {isAllSelected ? "Deselect All" : isIndeterminate ? `${selectedStudents.size} Selected` : "Select All"}
+                  <label htmlFor="select-all" className="text-sm font-medium cursor-pointer select-none">
+                    {isAllSelected ? "Deselect All Students" : isIndeterminate ? `${selectedStudents.size} Students Selected` : "Select All Students"}
                   </label>
                 </div>
               </Card>
@@ -339,58 +353,68 @@ export function StudentList({
                 <Card 
                   key={student.id} 
                   className={cn(
-                    "p-4 cursor-pointer transition-colors hover:bg-accent/30", 
-                    isSelected && "bg-accent/50 border-primary/50"
+                    "p-4 cursor-pointer transition-all duration-200 hover:bg-accent/40 hover:shadow-md border-2", 
+                    isSelected && "bg-accent/50 border-primary/60 shadow-sm"
                   )}
                   onClick={(e) => handleRowClick(student, e)}
                 >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={(checked) => handleSelectStudent(student.id, checked as boolean)}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3">
-                          <h3 className="font-medium text-foreground truncate">
-                            {student.fullName}
-                          </h3>
-                          <Badge variant="outline" className="text-xs">
-                            {student.studentId}
-                          </Badge>
+                  <div className="space-y-3">
+                    {/* Top row with checkbox and student info */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={(checked) => handleSelectStudent(student.id, checked as boolean)}
+                          className="mt-1 h-5 w-5"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-semibold text-foreground truncate text-base">
+                              {student.fullName}
+                            </h3>
+                            {currentNote && (
+                              <div title="Has note" className="flex-shrink-0">
+                                <StickyNote className="h-4 w-4 text-primary" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge variant="outline" className="text-xs font-medium">
+                              ID: {student.studentId}
+                            </Badge>
+                          </div>
+                          {(student.email || student.phone) && (
+                            <p className="text-sm text-muted-foreground truncate">
+                              {student.email && student.phone 
+                                ? `${student.email} • ${student.phone}`
+                                : student.email || student.phone
+                              }
+                            </p>
+                          )}
                           {currentNote && (
-                            <div title="Has note">
-                              <StickyNote className="h-4 w-4 text-muted-foreground" />
-                            </div>
+                            <p className="text-xs text-muted-foreground mt-2 p-2 bg-muted/50 rounded-md italic border-l-2 border-primary/30">
+                              "{currentNote}"
+                            </p>
                           )}
                         </div>
-                        {(student.email || student.phone) && (
-                          <p className="text-sm text-muted-foreground mt-1 truncate">
-                            {student.email && student.phone 
-                              ? `${student.email} • ${student.phone}`
-                              : student.email || student.phone
-                            }
-                          </p>
-                        )}
-                        {currentNote && (
-                          <p className="text-xs text-muted-foreground mt-1 truncate italic">
-                            "{currentNote}"
-                          </p>
-                        )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <AttendanceStatus
-                        status={currentStatus}
-                        onChange={(status) => onAttendanceChange(student.id, status)}
-                        onDelete={() => onDeleteAttendance(student.id)}
-                      />
+
+                    {/* Bottom row with actions */}
+                    <div className="flex items-center justify-between gap-3 pt-2 border-t border-border/50">
+                      <div className="flex-1">
+                        <AttendanceStatus
+                          status={currentStatus}
+                          onChange={(status) => onAttendanceChange(student.id, status)}
+                          onDelete={() => onDeleteAttendance(student.id)}
+                        />
+                      </div>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button 
                             variant="outline" 
-                            size="sm"
-                            className="text-destructive hover:bg-destructive/10 hover:border-destructive/20"
+                            size="icon"
+                            className="text-destructive hover:bg-destructive/10 hover:border-destructive/20 h-9 w-9"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

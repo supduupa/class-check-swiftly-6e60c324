@@ -8,12 +8,14 @@ import { AddStudentDialog } from "@/components/AddStudentDialog";
 import { CsvImportDialog } from "@/components/CsvImportDialog";
 import { CsvExportDialog } from "@/components/CsvExportDialog";
 import { DailySummary } from "@/components/DailySummary";
+import { MobileHeader } from "@/components/MobileHeader";
 import RoleManagement from "@/components/RoleManagement";
 import { Student, Attendance, AttendanceStatus, AttendanceRecord } from "@/types/attendance";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { GraduationCap, LogOut, Download } from "lucide-react";
+import { GraduationCap, LogOut, Download, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Index = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -22,9 +24,11 @@ const Index = () => {
   const [showAddStudent, setShowAddStudent] = useState(false);
   const [showCsvImport, setShowCsvImport] = useState(false);
   const [showCsvExport, setShowCsvExport] = useState(false);
+  const [showRoleManagement, setShowRoleManagement] = useState(false);
   const [loading, setLoading] = useState(true);
   const { profile, signOut } = useAuth();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const selectedDateString = format(selectedDate, 'yyyy-MM-dd');
 
@@ -596,81 +600,120 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-primary to-primary/90 text-primary-foreground">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <GraduationCap className="h-8 w-8" />
-              <h1 className="text-3xl font-bold">Class Attendance</h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <Button
-                onClick={() => setShowCsvExport(true)}
-                variant="outline"
-                size="sm"
-                className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export CSV
-              </Button>
-              <span className="text-sm text-primary-foreground/80">
-                Welcome, {profile?.full_name} ({profile?.role})
-              </span>
-              <Button
-                onClick={signOut}
-                variant="outline"
-                size="sm"
-                className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
-              </Button>
-            </div>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold mb-1">Daily Attendance</h2>
-              <p className="text-primary-foreground/80">
-                Track attendance for {students.length} students
-              </p>
-            </div>
-            <DateSelector 
-              selectedDate={selectedDate}
-              onDateChange={setSelectedDate}
+      {isMobile ? (
+        <>
+          <MobileHeader 
+            selectedDate={selectedDate}
+            onSignOut={signOut}
+            userName={profile?.full_name || profile?.email}
+          />
+          <main className="px-4 pb-6 space-y-4">
+            {/* Mobile Date Selector */}
+            <Card className="p-4 bg-gradient-mobile">
+              <DateSelector selectedDate={selectedDate} onDateChange={setSelectedDate} />
+            </Card>
+
+            {/* Mobile Summary */}
+            <DailySummary
+              students={students}
+              attendanceRecords={attendanceRecords}
+              selectedDate={selectedDateString}
             />
-          </div>
-        </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-8 space-y-6">
-        <DailySummary
-          students={students}
-          attendanceRecords={attendanceRecords}
-          selectedDate={selectedDateString}
-        />
-        
-        <Card className="shadow-lg">
-          <div className="p-6">
-              <StudentList
-                students={students}
-                attendanceRecords={attendanceRecords}
-                selectedDate={selectedDateString}
-                onAttendanceChange={handleAttendanceChange}
-                onBulkAttendanceChange={handleBulkAttendanceChange}
-                onDeleteAttendance={handleDeleteAttendance}
-                onAddStudent={() => setShowAddStudent(true)}
-                onImportStudents={() => setShowCsvImport(true)}
-                onDeleteStudent={handleDeleteStudent}
-                onUpdateNote={handleUpdateNote}
-              />
+            {/* Main Content */}
+            <StudentList
+              students={students}
+              attendanceRecords={attendanceRecords}
+              selectedDate={selectedDateString}
+              onAttendanceChange={handleAttendanceChange}
+              onBulkAttendanceChange={handleBulkAttendanceChange}
+              onDeleteAttendance={handleDeleteAttendance}
+              onAddStudent={() => setShowAddStudent(true)}
+              onImportStudents={() => setShowCsvImport(true)}
+              onDeleteStudent={handleDeleteStudent}
+              onUpdateNote={handleUpdateNote}
+            />
+          </main>
+        </>
+      ) : (
+        <>
+          {/* Desktop Header */}
+          <div className="bg-gradient-to-r from-primary to-primary/90 text-primary-foreground">
+            <div className="container mx-auto px-4 py-8">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <GraduationCap className="h-8 w-8" />
+                  <h1 className="text-3xl font-bold">Class Attendance</h1>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Button
+                    onClick={() => setShowCsvExport(true)}
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export CSV
+                  </Button>
+                  <span className="text-sm text-primary-foreground/80">
+                    Welcome, {profile?.full_name} ({profile?.role})
+                  </span>
+                  <Button
+                    onClick={signOut}
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold mb-1">Daily Attendance</h2>
+                  <p className="text-primary-foreground/80">
+                    Track attendance for {students.length} students
+                  </p>
+                </div>
+                <DateSelector 
+                  selectedDate={selectedDate}
+                  onDateChange={setSelectedDate}
+                />
+              </div>
+            </div>
           </div>
-        </Card>
 
-        <RoleManagement />
-      </div>
+          {/* Main Content */}
+          <div className="container mx-auto px-4 py-8 space-y-6">
+            <DailySummary
+              students={students}
+              attendanceRecords={attendanceRecords}
+              selectedDate={selectedDateString}
+            />
+            
+            <Card className="shadow-lg">
+              <div className="p-6">
+                  <StudentList
+                    students={students}
+                    attendanceRecords={attendanceRecords}
+                    selectedDate={selectedDateString}
+                    onAttendanceChange={handleAttendanceChange}
+                    onBulkAttendanceChange={handleBulkAttendanceChange}
+                    onDeleteAttendance={handleDeleteAttendance}
+                    onAddStudent={() => setShowAddStudent(true)}
+                    onImportStudents={() => setShowCsvImport(true)}
+                    onDeleteStudent={handleDeleteStudent}
+                    onUpdateNote={handleUpdateNote}
+                  />
+              </div>
+            </Card>
+
+            <RoleManagement />
+          </div>
+        </>
+      )}
 
       {/* Add Student Dialog */}
       <AddStudentDialog

@@ -44,15 +44,16 @@ export function DailySummary({ students, attendanceRecords, selectedDate }: Dail
 
   const totalStudents = students.length;
   const recordedCount = attendanceRecords.filter(record => record.date === selectedDate).length;
+  const attendanceRate = totalStudents > 0 ? Math.round((getStatusCount('Present') / totalStudents) * 100) : 0;
 
   return (
-    <Card className="p-6 mb-6">
+    <Card className="p-4 sm:p-6 bg-gradient-mobile shadow-sm">
       <div className="flex items-center gap-2 mb-4">
         <Users className="h-5 w-5 text-primary" />
         <h3 className="text-lg font-semibold">Daily Summary</h3>
       </div>
       
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
         {(Object.keys(statusConfig) as AttendanceStatus[]).map((status) => {
           const config = statusConfig[status];
           const Icon = config.icon;
@@ -61,22 +62,27 @@ export function DailySummary({ students, attendanceRecords, selectedDate }: Dail
           return (
             <div
               key={status}
-              className={`p-3 rounded-lg border ${config.bgColor} transition-all duration-200`}
+              className={`p-3 sm:p-4 rounded-lg border-2 ${config.bgColor} transition-all duration-200 hover:scale-105 active:scale-95`}
             >
-              <div className="flex items-center gap-2 mb-1">
-                <Icon className={`h-4 w-4 ${config.color}`} />
-                <span className="text-sm font-medium text-muted-foreground">
+              <div className="flex items-center gap-2 mb-2">
+                <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${config.color}`} />
+                <span className="text-xs sm:text-sm font-medium text-muted-foreground">
                   {config.label}
                 </span>
               </div>
-              <div className="text-2xl font-bold">{count}</div>
+              <div className="text-xl sm:text-2xl font-bold">{count}</div>
             </div>
           );
         })}
       </div>
 
-      <div className="text-sm text-muted-foreground">
-        {recordedCount} of {totalStudents} students recorded
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-3 border-t border-border/50">
+        <div className="text-sm text-muted-foreground">
+          {recordedCount} of {totalStudents} students recorded
+        </div>
+        <div className="text-sm font-medium text-primary">
+          {attendanceRate}% attendance rate
+        </div>
       </div>
     </Card>
   );
