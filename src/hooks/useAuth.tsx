@@ -38,8 +38,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .single();
       
       if (error) {
-        console.error('Error fetching profile:', error);
-        
         // Handle JWT expiration by signing out
         if (error.code === 'PGRST301' || error.code === 'PGRST303' || error.message?.includes('JWT')) {
           console.log('JWT expired, signing out...');
@@ -47,12 +45,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           return null;
         }
         
+        // Only log non-network errors to avoid console noise
+        if (!error.message?.includes('Failed to fetch')) {
+          console.error('Error fetching profile:', error);
+        }
+        
         return null;
       }
       
       return data;
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      // Only log non-network errors to avoid console noise
+      if (error instanceof Error && !error.message?.includes('Failed to fetch')) {
+        console.error('Error fetching profile:', error);
+      }
       return null;
     }
   };
