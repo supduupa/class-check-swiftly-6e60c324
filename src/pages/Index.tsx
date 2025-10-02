@@ -499,6 +499,7 @@ const Index = () => {
     const updatedStudents = [...students];
     let newCount = 0;
     let updateCount = 0;
+    const failures: { student: string; reason: string }[] = [];
 
     try {
       for (const importedStudent of importedStudents) {
@@ -520,6 +521,10 @@ const Index = () => {
 
             if (error) {
               console.error('Error updating student:', error);
+              failures.push({
+                student: `${importedStudent.fullName} (${importedStudent.studentId})`,
+                reason: error.message || 'Unknown error'
+              });
               continue;
             }
 
@@ -544,6 +549,10 @@ const Index = () => {
 
           if (error) {
             console.error('Error adding student:', error);
+            failures.push({
+              student: `${importedStudent.fullName} (${importedStudent.studentId})`,
+              reason: error.message || 'Unknown error'
+            });
             continue;
           }
 
@@ -561,15 +570,26 @@ const Index = () => {
 
       setStudents(updatedStudents);
       
-      toast({
-        title: "Import Complete",
-        description: `Added ${newCount} new students${updateCount > 0 ? ` and updated ${updateCount} existing students` : ''}.`,
-      });
+      // Show detailed results
+      if (failures.length === 0) {
+        toast({
+          title: "Import Complete",
+          description: `Successfully added ${newCount} new students${updateCount > 0 ? ` and updated ${updateCount} existing students` : ''}.`,
+        });
+      } else {
+        const successCount = newCount + updateCount;
+        console.log('Failed imports:', failures);
+        toast({
+          title: "Import Partially Complete",
+          description: `Successfully imported ${successCount} students. ${failures.length} students failed to import. Check console for details.`,
+          variant: failures.length > successCount ? 'destructive' : 'default',
+        });
+      }
     } catch (error) {
       console.error('Error importing students:', error);
       toast({
         title: 'Error',
-        description: 'Failed to import some students',
+        description: 'Failed to import students',
         variant: 'destructive',
       });
     }
