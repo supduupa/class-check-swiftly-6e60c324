@@ -27,31 +27,15 @@ export default function StudentDashboard() {
   }, [profile]);
 
   const fetchStudentData = async () => {
-    if (!profile?.full_name) return;
+    if (!profile) return;
 
     try {
-      // Try multiple matching strategies to find the student record
-      const profileName = profile.full_name.trim().toLowerCase();
-      
-      // First try exact match
-      let { data, error } = await supabase
+      // RLS policies will automatically filter to show only the student record
+      // where user_id matches the authenticated user
+      const { data, error } = await supabase
         .from('students')
         .select('*')
-        .ilike('full_name', profile.full_name.trim())
         .maybeSingle();
-
-      // If no exact match, try partial matching
-      if (!data && !error) {
-        const { data: partialData, error: partialError } = await supabase
-          .from('students')
-          .select('*')
-          .or(`full_name.ilike.%${profileName}%,full_name.ilike.${profileName}%`)
-          .limit(1)
-          .maybeSingle();
-        
-        data = partialData;
-        error = partialError;
-      }
 
       if (error) {
         console.error('Error fetching student data:', error);
@@ -76,10 +60,11 @@ export default function StudentDashboard() {
   };
 
   const fetchAttendanceHistory = async () => {
-    if (!profile?.full_name) return;
+    if (!profile) return;
 
     try {
-      // Use a simpler approach that works with our improved RLS policies
+      // RLS policies will automatically filter to show only attendance records
+      // for the student whose user_id matches the authenticated user
       const { data, error } = await supabase
         .from('attendance')
         .select(`
@@ -209,7 +194,7 @@ export default function StudentDashboard() {
             ) : (
               <div className="text-center py-8">
                 <p className="text-muted-foreground">
-                  No student record found. Please contact your instructor to add you to the class roster.
+                  No student record found linked to your account. Please contact your instructor to link your account to your student record.
                 </p>
               </div>
             )}
