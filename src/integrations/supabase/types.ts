@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       attendance: {
         Row: {
+          class_id: string | null
           created_at: string
           date: string
           id: string
@@ -25,6 +26,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          class_id?: string | null
           created_at?: string
           date: string
           id?: string
@@ -34,6 +36,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          class_id?: string | null
           created_at?: string
           date?: string
           id?: string
@@ -44,10 +47,52 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "attendance_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "attendance_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classes: {
+        Row: {
+          class_name: string
+          created_at: string
+          description: string | null
+          id: string
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          class_name: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          class_name?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classes_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -81,6 +126,7 @@ export type Database = {
       }
       students: {
         Row: {
+          class_id: string | null
           created_at: string
           email: string | null
           full_name: string
@@ -91,6 +137,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          class_id?: string | null
           created_at?: string
           email?: string | null
           full_name: string
@@ -101,6 +148,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          class_id?: string | null
           created_at?: string
           email?: string | null
           full_name?: string
@@ -110,7 +158,15 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "students_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

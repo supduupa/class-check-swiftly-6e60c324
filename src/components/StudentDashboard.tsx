@@ -63,9 +63,19 @@ export default function StudentDashboard() {
     if (!profile) return;
 
     try {
+      // First get the student's class_id
+      const { data: studentData, error: studentError } = await supabase
+        .from('students')
+        .select('class_id')
+        .maybeSingle();
+
+      if (studentError) {
+        console.error('Error fetching student class:', studentError);
+      }
+
       // RLS policies will automatically filter to show only attendance records
       // for the student whose user_id matches the authenticated user
-      const { data, error } = await supabase
+      let query = supabase
         .from('attendance')
         .select(`
           id,
@@ -75,6 +85,13 @@ export default function StudentDashboard() {
           student_id
         `)
         .order('date', { ascending: false });
+
+      // Filter by class if student has a class_id
+      if (studentData?.class_id) {
+        query = query.eq('class_id', studentData.class_id);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error fetching attendance:', error);

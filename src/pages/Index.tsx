@@ -10,7 +10,8 @@ import { CsvExportDialog } from "@/components/CsvExportDialog";
 import { DailySummary } from "@/components/DailySummary";
 import { MobileHeader } from "@/components/MobileHeader";
 import RoleManagement from "@/components/RoleManagement";
-import { Student, Attendance, AttendanceStatus, AttendanceRecord } from "@/types/attendance";
+import { Student, Attendance, AttendanceStatus, AttendanceRecord, Class } from "@/types/attendance";
+import { ClassSelector } from "@/components/ClassSelector";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { GraduationCap, LogOut, Download, Settings } from "lucide-react";
@@ -21,6 +22,8 @@ const Index = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [students, setStudents] = useState<Student[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<Attendance[]>([]);
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [showAddStudent, setShowAddStudent] = useState(false);
   const [showCsvImport, setShowCsvImport] = useState(false);
   const [showCsvExport, setShowCsvExport] = useState(false);
@@ -34,6 +37,7 @@ const Index = () => {
 
   // Load data from Supabase
   useEffect(() => {
+    loadClasses();
     loadStudents();
     loadAttendance();
   }, []);
@@ -42,12 +46,47 @@ const Index = () => {
     loadAttendance(); // Reload attendance when date changes
   }, [selectedDateString]);
 
-  const loadStudents = async () => {
+  useEffect(() => {
+    loadStudents(); // Reload students when class changes
+    loadAttendance(); // Reload attendance when class changes
+  }, [selectedClassId]);
+
+  const loadClasses = async () => {
     try {
       const { data, error } = await supabase
+        .from('classes')
+        .select('*')
+        .order('class_name');
+
+      if (error) {
+        console.error('Error loading classes:', error);
+        return;
+      }
+
+      setClasses((data || []).map(cls => ({
+        id: cls.id,
+        class_name: cls.class_name,
+        teacher_id: cls.teacher_id,
+        description: cls.description
+      })));
+    } catch (error) {
+      console.error('Error loading classes:', error);
+    }
+  };
+
+  const loadStudents = async () => {
+    try {
+      let query = supabase
         .from('students')
         .select('*')
         .order('full_name');
+
+      // Filter by class if selected
+      if (selectedClassId) {
+        query = query.eq('class_id', selectedClassId);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error loading students:', error);
@@ -64,7 +103,8 @@ const Index = () => {
         fullName: student.full_name,
         studentId: student.student_id,
         email: student.email,
-        phone: student.phone
+        phone: student.phone,
+        classId: student.class_id
       })));
     } catch (error) {
       console.error('Error loading students:', error);
@@ -75,10 +115,17 @@ const Index = () => {
 
   const loadAttendance = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('attendance')
         .select('*')
         .order('date', { ascending: false });
+
+      // Filter by class if selected
+      if (selectedClassId) {
+        query = query.eq('class_id', selectedClassId);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error loading attendance:', error);
@@ -95,7 +142,8 @@ const Index = () => {
         studentId: record.student_id,
         date: record.date,
         status: record.status,
-        note: record.note
+        note: record.note,
+        classId: record.class_id
       })));
     } catch (error) {
       console.error('Error loading attendance:', error);
@@ -110,7 +158,8 @@ const Index = () => {
           full_name: studentData.fullName,
           student_id: studentData.studentId,
           email: studentData.email,
-          phone: studentData.phone
+          phone: studentData.phone,
+          class_id: studentData.classId || selectedClassId
         })
         .select()
         .single();
@@ -130,7 +179,8 @@ const Index = () => {
         fullName: data.full_name,
         studentId: data.student_id,
         email: data.email,
-        phone: data.phone
+        phone: data.phone,
+        classId: data.class_id
       };
 
       setStudents(prev => [...prev, newStudent]);
@@ -180,12 +230,14 @@ const Index = () => {
         setAttendanceRecords(updatedRecords);
       } else {
         // Create new record
+        const student = students.find(s => s.id === studentId);
         const { data, error } = await supabase
           .from('attendance')
           .insert({
             student_id: studentId,
             date: selectedDateString,
-            status
+            status,
+            class_id: student?.classId || selectedClassId
           })
           .select()
           .single();
@@ -205,7 +257,8 @@ const Index = () => {
           studentId: data.student_id,
           date: data.date,
           status: data.status,
-          note: data.note
+          note: data.note,
+          classId: data.class_id
         };
         setAttendanceRecords(prev => [...prev, newRecord]);
       }
@@ -299,13 +352,15 @@ const Index = () => {
         setAttendanceRecords(updatedRecords);
       } else {
         // Create new record with default status and note
+        const student = students.find(s => s.id === studentId);
         const { data, error } = await supabase
           .from('attendance')
           .insert({
             student_id: studentId,
             date: selectedDateString,
             status: 'Absent',
-            note
+            note,
+            class_id: student?.classId || selectedClassId
           })
           .select()
           .single();
@@ -325,7 +380,8 @@ const Index = () => {
           studentId: data.student_id,
           date: data.date,
           status: data.status,
-          note: data.note
+          note: data.note,
+          classId: data.class_id
         };
 
         setAttendanceRecords(prev => [...prev, newRecord]);
@@ -353,10 +409,12 @@ const Index = () => {
           });
         } else {
           // Create new record
+          const student = students.find(s => s.id === studentId);
           inserts.push({
             student_id: studentId,
             date: selectedDateString,
-            status
+            status,
+            class_id: student?.classId || selectedClassId
           });
         }
       }
@@ -628,8 +686,14 @@ const Index = () => {
             userName={profile?.full_name || profile?.email}
           />
           <main className="px-4 pb-6 space-y-4">
-            {/* Mobile Date Selector */}
-            <Card className="p-4 bg-gradient-mobile">
+            {/* Mobile Class and Date Selector */}
+            <Card className="p-4 bg-gradient-mobile space-y-3">
+              <ClassSelector 
+                classes={classes}
+                selectedClassId={selectedClassId}
+                onSelectClass={setSelectedClassId}
+                loading={loading}
+              />
               <DateSelector selectedDate={selectedDate} onDateChange={setSelectedDate} />
             </Card>
 
@@ -697,10 +761,18 @@ const Index = () => {
                     Track attendance for {students.length} students
                   </p>
                 </div>
-                <DateSelector 
-                  selectedDate={selectedDate}
-                  onDateChange={setSelectedDate}
-                />
+                <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                  <ClassSelector 
+                    classes={classes}
+                    selectedClassId={selectedClassId}
+                    onSelectClass={setSelectedClassId}
+                    loading={loading}
+                  />
+                  <DateSelector 
+                    selectedDate={selectedDate}
+                    onDateChange={setSelectedDate}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -741,6 +813,8 @@ const Index = () => {
         onOpenChange={setShowAddStudent}
         onAddStudent={handleAddStudent}
         existingStudentIds={students.map(s => s.studentId)}
+        classes={classes}
+        selectedClassId={selectedClassId}
       />
 
       {/* CSV Import Dialog */}
