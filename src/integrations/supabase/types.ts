@@ -177,6 +177,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_user_class_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       is_staff_user: {
         Args: Record<PropertyKey, never>
         Returns: boolean
