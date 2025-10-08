@@ -39,38 +39,71 @@ const Index = () => {
 
   // Load data from Supabase
   useEffect(() => {
-    loadClasses();
-    loadStudents();
-    loadAttendance();
-  }, []);
+    if (profile) {
+      loadClasses();
+    }
+  }, [profile]);
 
   useEffect(() => {
-    loadAttendance(); // Reload attendance when date changes
-  }, [selectedDateString]);
-
-  useEffect(() => {
-    loadStudents(); // Reload students when class changes
-    loadAttendance(); // Reload attendance when class changes
+    if (selectedClassId) {
+      loadStudents();
+      loadAttendance();
+    }
   }, [selectedClassId]);
+
+  useEffect(() => {
+    if (selectedClassId) {
+      loadAttendance(); // Reload attendance when date changes
+    }
+  }, [selectedDateString]);
 
   const loadClasses = async () => {
     try {
-      const { data, error } = await supabase
-        .from('classes')
-        .select('*')
-        .order('class_name');
+      if (!profile) return;
+
+      let query = supabase.from('classes').select('*').order('class_name');
+
+      // Filter based on role
+      if (profile.role === 'Teacher') {
+        // Teachers only see their own classes
+        query = query.eq('teacher_id', profile.id);
+      } else if (profile.role === 'CourseRep') {
+        // CourseReps only see their assigned class
+        const { data: studentData } = await supabase
+          .from('students')
+          .select('class_id')
+          .eq('user_id', profile.id)
+          .single();
+
+        if (studentData?.class_id) {
+          query = query.eq('id', studentData.class_id);
+        } else {
+          // CourseRep has no class assigned
+          setClasses([]);
+          return;
+        }
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error loading classes:', error);
         return;
       }
 
-      setClasses((data || []).map(cls => ({
+      const loadedClasses = (data || []).map(cls => ({
         id: cls.id,
         class_name: cls.class_name,
         teacher_id: cls.teacher_id,
         description: cls.description
-      })));
+      }));
+
+      setClasses(loadedClasses);
+
+      // Auto-select the first (and often only) class for Teachers and CourseReps
+      if (loadedClasses.length > 0 && !selectedClassId) {
+        setSelectedClassId(loadedClasses[0].id);
+      }
     } catch (error) {
       console.error('Error loading classes:', error);
     }

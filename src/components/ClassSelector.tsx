@@ -13,13 +13,15 @@ interface ClassSelectorProps {
   selectedClassId: string | null;
   onSelectClass: (classId: string | null) => void;
   loading?: boolean;
+  showAllOption?: boolean;
 }
 
 export function ClassSelector({ 
   classes, 
   selectedClassId, 
   onSelectClass,
-  loading = false 
+  loading = false,
+  showAllOption = false
 }: ClassSelectorProps) {
   return (
     <div className="flex items-center gap-2">
@@ -33,7 +35,7 @@ export function ClassSelector({
           <SelectValue placeholder="Select a class" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Classes</SelectItem>
+          {showAllOption && <SelectItem value="all">All Classes</SelectItem>}
           {classes.map((cls) => (
             <SelectItem key={cls.id} value={cls.id}>
               {cls.class_name}
