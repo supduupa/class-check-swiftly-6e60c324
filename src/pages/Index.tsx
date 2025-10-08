@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { DateSelector } from "@/components/DateSelector";
 import { StudentList } from "@/components/StudentList";
 import { AddStudentDialog } from "@/components/AddStudentDialog";
+import { AddClassDialog } from "@/components/AddClassDialog";
 import { CsvImportDialog } from "@/components/CsvImportDialog";
 import { CsvExportDialog } from "@/components/CsvExportDialog";
 import { DailySummary } from "@/components/DailySummary";
@@ -25,6 +26,7 @@ const Index = () => {
   const [classes, setClasses] = useState<Class[]>([]);
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [showAddStudent, setShowAddStudent] = useState(false);
+  const [showAddClass, setShowAddClass] = useState(false);
   const [showCsvImport, setShowCsvImport] = useState(false);
   const [showCsvExport, setShowCsvExport] = useState(false);
   const [showRoleManagement, setShowRoleManagement] = useState(false);
@@ -147,6 +149,59 @@ const Index = () => {
       })));
     } catch (error) {
       console.error('Error loading attendance:', error);
+    }
+  };
+
+  const handleAddClass = async (classData: { class_name: string; description?: string }) => {
+    if (!profile?.id) {
+      toast({
+        title: 'Error',
+        description: 'User not authenticated',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('classes')
+        .insert({
+          class_name: classData.class_name,
+          description: classData.description,
+          teacher_id: profile.id
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating class:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to create class',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const newClass: Class = {
+        id: data.id,
+        class_name: data.class_name,
+        teacher_id: data.teacher_id,
+        description: data.description
+      };
+
+      setClasses(prev => [...prev, newClass]);
+      toast({
+        title: 'Success',
+        description: `${classData.class_name} has been created`,
+      });
+    } catch (error) {
+      console.error('Error creating class:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create class',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -688,12 +743,24 @@ const Index = () => {
           <main className="px-4 pb-6 space-y-4">
             {/* Mobile Class and Date Selector */}
             <Card className="p-4 bg-gradient-mobile space-y-3">
-              <ClassSelector 
-                classes={classes}
-                selectedClassId={selectedClassId}
-                onSelectClass={setSelectedClassId}
-                loading={loading}
-              />
+              <div className="flex gap-2 items-center">
+                <div className="flex-1">
+                  <ClassSelector 
+                    classes={classes}
+                    selectedClassId={selectedClassId}
+                    onSelectClass={setSelectedClassId}
+                    loading={loading}
+                  />
+                </div>
+                <Button
+                  onClick={() => setShowAddClass(true)}
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                >
+                  New Class
+                </Button>
+              </div>
               <DateSelector selectedDate={selectedDate} onDateChange={setSelectedDate} />
             </Card>
 
@@ -762,12 +829,22 @@ const Index = () => {
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-                  <ClassSelector 
-                    classes={classes}
-                    selectedClassId={selectedClassId}
-                    onSelectClass={setSelectedClassId}
-                    loading={loading}
-                  />
+                  <div className="flex gap-2 items-center">
+                    <ClassSelector 
+                      classes={classes}
+                      selectedClassId={selectedClassId}
+                      onSelectClass={setSelectedClassId}
+                      loading={loading}
+                    />
+                    <Button
+                      onClick={() => setShowAddClass(true)}
+                      variant="outline"
+                      size="sm"
+                      className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+                    >
+                      New Class
+                    </Button>
+                  </div>
                   <DateSelector 
                     selectedDate={selectedDate}
                     onDateChange={setSelectedDate}
@@ -815,6 +892,13 @@ const Index = () => {
         existingStudentIds={students.map(s => s.studentId)}
         classes={classes}
         selectedClassId={selectedClassId}
+      />
+
+      {/* Add Class Dialog */}
+      <AddClassDialog
+        open={showAddClass}
+        onOpenChange={setShowAddClass}
+        onAddClass={handleAddClass}
       />
 
       {/* CSV Import Dialog */}
