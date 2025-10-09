@@ -641,6 +641,80 @@ const Index = () => {
     }
   };
 
+  const handleDeleteClass = async (classId: string) => {
+    try {
+      // First delete all attendance records for this class
+      const { error: attendanceError } = await supabase
+        .from('attendance')
+        .delete()
+        .eq('class_id', classId);
+
+      if (attendanceError) {
+        console.error('Error deleting class attendance:', attendanceError);
+        toast({
+          title: 'Error',
+          description: 'Failed to delete attendance records',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Then delete all students in this class
+      const { error: studentsError } = await supabase
+        .from('students')
+        .delete()
+        .eq('class_id', classId);
+
+      if (studentsError) {
+        console.error('Error deleting class students:', studentsError);
+        toast({
+          title: 'Error',
+          description: 'Failed to delete students',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Finally delete the class
+      const { error: classError } = await supabase
+        .from('classes')
+        .delete()
+        .eq('id', classId);
+
+      if (classError) {
+        console.error('Error deleting class:', classError);
+        toast({
+          title: 'Error',
+          description: 'Failed to delete class',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Update local state
+      setClasses(prev => prev.filter(cls => cls.id !== classId));
+      
+      // If the deleted class was selected, clear selection
+      if (selectedClassId === classId) {
+        setSelectedClassId(null);
+        setStudents([]);
+        setAttendanceRecords([]);
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Class and all associated data have been deleted',
+      });
+    } catch (error) {
+      console.error('Error deleting class:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete class',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleCsvImport = async (importedStudents: Omit<Student, 'id'>[], updateExisting: boolean) => {
     const updatedStudents = [...students];
     let newCount = 0;
@@ -782,6 +856,7 @@ const Index = () => {
                     classes={classes}
                     selectedClassId={selectedClassId}
                     onSelectClass={setSelectedClassId}
+                    onDeleteClass={handleDeleteClass}
                     loading={loading}
                   />
                 </div>
@@ -867,6 +942,7 @@ const Index = () => {
                       classes={classes}
                       selectedClassId={selectedClassId}
                       onSelectClass={setSelectedClassId}
+                      onDeleteClass={handleDeleteClass}
                       loading={loading}
                     />
                     <Button
