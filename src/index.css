@@ -163,3 +163,18 @@ Mobile-optimized with improved touch targets and visual hierarchy.
     outline-offset: 2px;
   }
 }
+
+@layer utilities {
+  /* Educational gradient utilities */
+  .bg-gradient-mobile {
+    background: var(--gradient-mobile);
+  }
+  
+  .bg-gradient-header {
+    background: var(--gradient-header);
+  }
+  
+  .bg-gradient-card {
+    background: var(--gradient-card);
+  }
+}
