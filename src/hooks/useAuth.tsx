@@ -64,20 +64,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
+    let isMounted = true;
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!isMounted) return;
+        
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (session?.user) {
-          // Fetch profile after user is set
+        if (session?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
           setTimeout(async () => {
+            if (!isMounted) return;
             const profileData = await fetchProfile(session.user.id);
-            setProfile(profileData);
-            setLoading(false);
+            if (isMounted) {
+              setProfile(profileData);
+              setLoading(false);
+            }
           }, 0);
-        } else {
+        } else if (event === 'SIGNED_OUT') {
           setProfile(null);
           setLoading(false);
         }
@@ -86,17 +92,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // THEN check for existing session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!isMounted) return;
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
         const profileData = await fetchProfile(session.user.id);
-        setProfile(profileData);
+        if (isMounted) setProfile(profileData);
       }
-      setLoading(false);
+      if (isMounted) setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, fullName: string) => {
