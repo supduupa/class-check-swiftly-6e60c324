@@ -74,7 +74,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (session?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
+        if (session?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED')) {
+          // Skip re-fetching profile on token refresh if we already have it
+          if (event === 'TOKEN_REFRESHED' && profile) {
+            setLoading(false);
+            return;
+          }
           setTimeout(async () => {
             if (!isMounted) return;
             const profileData = await fetchProfile(session.user.id);
