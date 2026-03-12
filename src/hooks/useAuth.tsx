@@ -29,14 +29,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (authUser: User) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
-        .single();
-      
+        .eq('id', authUser.id)
+        .maybeSingle();
+
       if (error) {
         // Handle JWT expiration by signing out
         if (error.code === 'PGRST301' || error.code === 'PGRST303' || error.message?.includes('JWT')) {
@@ -44,15 +44,55 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           await supabase.auth.signOut();
           return null;
         }
-        
+
         // Only log non-network errors to avoid console noise
         if (!error.message?.includes('Failed to fetch')) {
           console.error('Error fetching profile:', error);
         }
-        
+
         return null;
       }
-      
+
+      // If no profile exists yet, create one for this authenticated user
+      if (!data) {
+        const fallbackName =
+          authUser.user_metadata?.full_name ||
+          authUser.user_metadata?.name ||
+          authUser.email?.split('@')[0] ||
+          'User';
+
+        const { data: createdProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authUser.id,
+            full_name: fallbackName,
+            email: authUser.email ?? null,
+            role: 'Student'
+          })
+          .select('*')
+          .maybeSingle();
+
+        if (createError) {
+          // If profile was created in parallel by another request, fetch again
+          const { data: refetchedProfile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', authUser.id)
+            .maybeSingle();
+
+          if (refetchedProfile) {
+            return refetchedProfile;
+          }
+
+          if (!createError.message?.includes('duplicate key') && createError.code !== '23505') {
+            console.error('Error creating profile:', createError);
+          }
+          return null;
+        }
+
+        return createdProfile;
+      }
+
       return data;
     } catch (error) {
       // Only log non-network errors to avoid console noise
@@ -70,10 +110,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!isMounted) return;
-        
+
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED')) {
           // Skip re-fetching profile on token refresh if we already have it
           if (event === 'TOKEN_REFRESHED' && profile) {
@@ -82,7 +122,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
           setTimeout(async () => {
             if (!isMounted) return;
-            const profileData = await fetchProfile(session.user.id);
+            const profileData = await fetchProfile(session.user);
             if (isMounted) {
               setProfile(profileData);
               setLoading(false);
@@ -100,9 +140,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!isMounted) return;
       setSession(session);
       setUser(session?.user ?? null);
-      
+
       if (session?.user) {
-        const profileData = await fetchProfile(session.user.id);
+        const profileData = await fetchProfile(session.user);
         if (isMounted) setProfile(profileData);
       }
       if (isMounted) setLoading(false);
