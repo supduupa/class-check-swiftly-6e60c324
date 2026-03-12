@@ -3,9 +3,8 @@
 @tailwind utilities;
 
 /* Class Attendance App Design System
-Professional educational interface with mobile-first responsive design
+Professional educational interface with clear status indicators
 All colors MUST be HSL.
-Mobile-optimized with improved touch targets and visual hierarchy.
 */
 
 @layer base {
@@ -55,18 +54,11 @@ Mobile-optimized with improved touch targets and visual hierarchy.
     --status-excused-foreground: 0 0% 100%;
     --status-excused-hover: 217 91% 56%;
 
-    /* Educational gradients */
+    /* Educational gradient */
     --gradient-header: linear-gradient(135deg, hsl(217 33% 17%), hsl(217 33% 25%));
     --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(210 40% 98%));
-    --gradient-mobile: linear-gradient(180deg, hsl(210 40% 98%), hsl(0 0% 100%));
 
-    /* Mobile-optimized spacing and touch targets */
-    --touch-target: 44px;
-    --mobile-padding: 1rem;
-    --desktop-padding: 1.5rem;
-    
-    --radius: 0.75rem;
-    --radius-sm: 0.5rem;
+    --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -131,50 +123,5 @@ Mobile-optimized with improved touch targets and visual hierarchy.
 
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
-  }
-
-  /* Mobile-optimized base styles */
-  @media (max-width: 768px) {
-    body {
-      font-size: 16px; /* Prevents zoom on iOS */
-    }
-    
-    /* Better touch targets */
-    button, [role="button"] {
-      min-height: var(--touch-target);
-      min-width: var(--touch-target);
-    }
-    
-    /* Improved form inputs */
-    input, textarea, select {
-      font-size: 16px; /* Prevents zoom on iOS */
-    }
-  }
-
-  /* Smooth transitions for better UX */
-  * {
-    transition: colors 200ms ease, border-color 200ms ease, background-color 200ms ease;
-  }
-
-  /* Enhanced focus states for accessibility */
-  *:focus-visible {
-    outline: 2px solid hsl(var(--ring));
-    outline-offset: 2px;
-  }
-}
-
-@layer utilities {
-  /* Educational gradient utilities */
-  .bg-gradient-mobile {
-    background: var(--gradient-mobile);
-  }
-  
-  .bg-gradient-header {
-    background: var(--gradient-header);
-  }
-  
-  .bg-gradient-card {
-    background: var(--gradient-card);
   }
 }

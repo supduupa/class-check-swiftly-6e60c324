@@ -10,14 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Student, Class } from "@/types/attendance";
+import { Student } from "@/types/attendance";
 import { useToast } from "@/hooks/use-toast";
 
 interface AddStudentDialogProps {
@@ -25,25 +18,20 @@ interface AddStudentDialogProps {
   onOpenChange: (open: boolean) => void;
   onAddStudent: (student: Omit<Student, 'id'>) => void;
   existingStudentIds: string[];
-  classes: Class[];
-  selectedClassId?: string | null;
 }
 
 export function AddStudentDialog({ 
   open, 
   onOpenChange, 
   onAddStudent, 
-  existingStudentIds,
-  classes,
-  selectedClassId
+  existingStudentIds 
 }: AddStudentDialogProps) {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     fullName: "",
     studentId: "",
     email: "",
-    phone: "",
-    classId: selectedClassId || ""
+    phone: ""
   });
 
   const resetForm = () => {
@@ -51,8 +39,7 @@ export function AddStudentDialog({
       fullName: "",
       studentId: "",
       email: "",
-      phone: "",
-      classId: selectedClassId || ""
+      phone: ""
     });
   };
 
@@ -90,8 +77,7 @@ export function AddStudentDialog({
       fullName: formData.fullName.trim(),
       studentId: formData.studentId.trim(),
       email: formData.email.trim() || undefined,
-      phone: formData.phone.trim() || undefined,
-      classId: formData.classId || undefined
+      phone: formData.phone.trim() || undefined
     });
 
     toast({
@@ -153,25 +139,6 @@ export function AddStudentDialog({
                 onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                 placeholder="Enter phone number"
               />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="class">Class</Label>
-              <Select 
-                value={formData.classId} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, classId: value }))}
-              >
-                <SelectTrigger id="class">
-                  <SelectValue placeholder="Select a class (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">No class</SelectItem>
-                  {classes.map((cls) => (
-                    <SelectItem key={cls.id} value={cls.id}>
-                      {cls.class_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           </div>
           <DialogFooter>
