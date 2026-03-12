@@ -21,6 +21,7 @@ export type Database = {
           date: string
           id: string
           note: string | null
+          session_id: string | null
           status: Database["public"]["Enums"]["attendance_status"]
           student_id: string
           updated_at: string
@@ -31,6 +32,7 @@ export type Database = {
           date: string
           id?: string
           note?: string | null
+          session_id?: string | null
           status?: Database["public"]["Enums"]["attendance_status"]
           student_id: string
           updated_at?: string
@@ -41,6 +43,7 @@ export type Database = {
           date?: string
           id?: string
           note?: string | null
+          session_id?: string | null
           status?: Database["public"]["Enums"]["attendance_status"]
           student_id?: string
           updated_at?: string
@@ -173,7 +176,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_staff_user: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "Teacher" | "CourseRep" | "Student"
