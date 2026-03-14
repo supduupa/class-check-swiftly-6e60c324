@@ -164,7 +164,7 @@ export function AddStudentDialog({
                   <SelectValue placeholder="Select a class (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No class</SelectItem>
+                  <SelectItem value="none">No class</SelectItem>
                   {classes.map((cls) => (
                     <SelectItem key={cls.id} value={cls.id}>
                       {cls.class_name}
