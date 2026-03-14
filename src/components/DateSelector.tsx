@@ -17,7 +17,7 @@ export function DateSelector({ selectedDate, onDateChange }: DateSelectorProps) 
         <Button
           variant="outline"
           className={cn(
-            "w-full sm:w-[280px] justify-start text-left font-normal",
+            "w-full sm:w-[240px] lg:w-[280px] justify-start text-left font-normal",
             "bg-card hover:bg-accent"
           )}
         >

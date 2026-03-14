@@ -52,14 +52,14 @@ export function AttendanceStatus({ status, onChange, onDelete, className }: Atte
       <Button
         onClick={handleClick}
         className={cn(
-          "min-w-[90px] sm:min-w-[100px] min-h-[44px] font-medium transition-all duration-200 shadow-sm hover:shadow-md border-2 active:scale-95",
+          "min-w-[70px] sm:min-w-[90px] lg:min-w-[100px] min-h-[40px] sm:min-h-[44px] font-medium transition-all duration-200 shadow-sm hover:shadow-md border-2 active:scale-95 text-xs sm:text-sm",
           currentConfig.color,
           className
         )}
-        size="mobile"
+        size="sm"
       >
-        <span className="sm:hidden text-base font-semibold">{currentConfig.shortLabel}</span>
-        <span className="hidden sm:flex text-sm">{currentConfig.label}</span>
+        <span className="md:hidden text-xs font-semibold">{currentConfig.shortLabel}</span>
+        <span className="hidden md:flex text-sm">{currentConfig.label}</span>
       </Button>
       {isStaff && onDelete && (
         <Button

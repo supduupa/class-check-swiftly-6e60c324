@@ -72,7 +72,7 @@ export function ClassSelector({
             onValueChange={(value) => onSelectClass(value === "all" ? null : value)}
             disabled={loading}
           >
-            <SelectTrigger className="w-[250px]">
+            <SelectTrigger className="w-full sm:w-[200px] lg:w-[250px]">
               <SelectValue placeholder="Select a class" />
             </SelectTrigger>
             <SelectContent>
