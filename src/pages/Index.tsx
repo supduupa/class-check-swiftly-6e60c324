@@ -61,7 +61,7 @@ const Index = () => {
     if (selectedClassId) {
       void loadAttendance(); // Reload attendance when date changes
     }
-  }, [selectedDateString, selectedClassId]);
+  }, [selectedDateString]);
 
   const loadClasses = async () => {
     try {
