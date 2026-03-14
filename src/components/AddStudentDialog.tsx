@@ -91,7 +91,7 @@ export function AddStudentDialog({
       studentId: formData.studentId.trim(),
       email: formData.email.trim() || undefined,
       phone: formData.phone.trim() || undefined,
-      classId: formData.classId || undefined
+      classId: formData.classId && formData.classId !== "none" ? formData.classId : undefined
     });
 
     toast({
