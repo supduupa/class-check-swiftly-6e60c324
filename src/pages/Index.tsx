@@ -40,20 +40,26 @@ const Index = () => {
   // Load data from Supabase
   useEffect(() => {
     if (profile) {
-      loadClasses();
+      void loadClasses();
     }
   }, [profile]);
 
   useEffect(() => {
-    if (selectedClassId) {
-      loadStudents();
-      loadAttendance();
+    if (!selectedClassId) {
+      setStudents([]);
+      setAttendanceRecords([]);
+      return;
     }
+
+    setLoading(true);
+    void Promise.all([loadStudents(), loadAttendance()]).finally(() => {
+      setLoading(false);
+    });
   }, [selectedClassId]);
 
   useEffect(() => {
     if (selectedClassId) {
-      loadAttendance(); // Reload attendance when date changes
+      void loadAttendance(); // Reload attendance when date changes
     }
   }, [selectedDateString]);
 
@@ -80,6 +86,8 @@ const Index = () => {
         } else {
           // CourseRep has no class assigned
           setClasses([]);
+          setSelectedClassId(null);
+          setLoading(false);
           return;
         }
       }
@@ -88,6 +96,7 @@ const Index = () => {
 
       if (error) {
         console.error('Error loading classes:', error);
+        setLoading(false);
         return;
       }
 
@@ -100,12 +109,21 @@ const Index = () => {
 
       setClasses(loadedClasses);
 
-      // Auto-select the first (and often only) class for Teachers and CourseReps
-      if (loadedClasses.length > 0 && !selectedClassId) {
+      if (loadedClasses.length === 0) {
+        setSelectedClassId(null);
+        setStudents([]);
+        setAttendanceRecords([]);
+        setLoading(false);
+        return;
+      }
+
+      // Auto-select the first class when no class is selected or current selection is stale
+      if (!selectedClassId || !loadedClasses.some(cls => cls.id === selectedClassId)) {
         setSelectedClassId(loadedClasses[0].id);
       }
     } catch (error) {
       console.error('Error loading classes:', error);
+      setLoading(false);
     }
   };
 
@@ -143,8 +161,6 @@ const Index = () => {
       })));
     } catch (error) {
       console.error('Error loading students:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
