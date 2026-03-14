@@ -33,7 +33,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const { profile, signOut } = useAuth();
   const { toast } = useToast();
-  const isMobile = useIsMobile();
+  
 
   const selectedDateString = format(selectedDate, 'yyyy-MM-dd');
 
