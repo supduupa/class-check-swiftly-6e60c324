@@ -176,6 +176,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_class_id: { Args: { _user_id: string }; Returns: string }
       is_staff_user: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
