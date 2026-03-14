@@ -17,7 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { GraduationCap, LogOut, Download, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
+
 
 const Index = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
