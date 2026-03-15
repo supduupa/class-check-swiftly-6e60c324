@@ -7,9 +7,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { AttendanceStatus } from "./AttendanceStatus";
+import { SwipeableStudentCard } from "./SwipeableStudentCard";
 import { Student, Attendance, AttendanceStatus as Status } from "@/types/attendance";
-import { Search, UserPlus, Check, Users, Upload, Trash2, StickyNote } from "lucide-react";
+import { Search, UserPlus, Check, Users, Upload, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
