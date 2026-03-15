@@ -935,7 +935,7 @@ const Index = () => {
       </div>
 
       {/* Mobile Content */}
-      <main className="md:hidden px-4 pb-6 space-y-4">
+      <main className="md:hidden px-4 pb-20 space-y-4">
         <Card className="p-4 bg-gradient-mobile space-y-3">
           <div className="flex gap-2 items-center">
             <div className="flex-1">
@@ -1039,6 +1039,48 @@ const Index = () => {
         attendanceRecords={attendanceRecordsWithStudents}
         currentDate={selectedDateString}
       />
+
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex items-center justify-around py-2 px-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAddStudent(true)}
+            className="flex flex-col items-center gap-1 h-auto py-2 px-3"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
+            <span className="text-[10px] font-medium">Add Student</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowCsvExport(true)}
+            className="flex flex-col items-center gap-1 h-auto py-2 px-3"
+          >
+            <Download className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Export</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowCsvImport(true)}
+            className="flex flex-col items-center gap-1 h-auto py-2 px-3"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+            <span className="text-[10px] font-medium">Import</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={signOut}
+            className="flex flex-col items-center gap-1 h-auto py-2 px-3"
+          >
+            <LogOut className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Sign Out</span>
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };
