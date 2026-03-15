@@ -935,7 +935,7 @@ const Index = () => {
       </div>
 
       {/* Mobile Content */}
-      <main className="md:hidden px-4 pb-6 space-y-4">
+      <main className="md:hidden px-4 pb-20 space-y-4">
         <Card className="p-4 bg-gradient-mobile space-y-3">
           <div className="flex gap-2 items-center">
             <div className="flex-1">
