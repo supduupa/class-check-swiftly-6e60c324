@@ -350,96 +350,18 @@ export function StudentList({
               const currentNote = getAttendanceNote(student.id);
               const isSelected = selectedStudents.has(student.id);
               return (
-                <Card 
-                  key={student.id} 
-                  className={cn(
-                    "p-4 cursor-pointer transition-all duration-200 hover:bg-accent/40 hover:shadow-md border-2", 
-                    isSelected && "bg-accent/50 border-primary/60 shadow-sm"
-                  )}
-                  onClick={(e) => handleRowClick(student, e)}
-                >
-                  <div className="space-y-3">
-                    {/* Top row with checkbox and student info */}
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={(checked) => handleSelectStudent(student.id, checked as boolean)}
-                          className="mt-1 h-5 w-5"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-semibold text-foreground truncate text-base">
-                              {student.fullName}
-                            </h3>
-                            {currentNote && (
-                              <div title="Has note" className="flex-shrink-0">
-                                <StickyNote className="h-4 w-4 text-primary" />
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <Badge variant="outline" className="text-xs font-medium">
-                              ID: {student.studentId}
-                            </Badge>
-                          </div>
-                          {(student.email || student.phone) && (
-                            <p className="text-sm text-muted-foreground truncate">
-                              {student.email && student.phone 
-                                ? `${student.email} • ${student.phone}`
-                                : student.email || student.phone
-                              }
-                            </p>
-                          )}
-                          {currentNote && (
-                            <p className="text-xs text-muted-foreground mt-2 p-2 bg-muted/50 rounded-md italic border-l-2 border-primary/30">
-                              "{currentNote}"
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Bottom row with actions */}
-                    <div className="flex items-center justify-between gap-3 pt-2 border-t border-border/50">
-                      <div className="flex-1">
-                        <AttendanceStatus
-                          status={currentStatus}
-                          onChange={(status) => onAttendanceChange(student.id, status)}
-                          onDelete={() => onDeleteAttendance(student.id)}
-                        />
-                      </div>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button 
-                            variant="outline" 
-                            size="icon"
-                            className="text-destructive hover:bg-destructive/10 hover:border-destructive/20 h-9 w-9"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Student</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete {student.fullName}? This will permanently remove the student and all their attendance records. This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction 
-                              onClick={() => onDeleteStudent(student.id)}
-                              className="bg-destructive hover:bg-destructive/90"
-                            >
-                              Delete Student
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
-                </Card>
+                <SwipeableStudentCard
+                  key={student.id}
+                  student={student}
+                  currentStatus={currentStatus}
+                  currentNote={currentNote}
+                  isSelected={isSelected}
+                  onAttendanceChange={onAttendanceChange}
+                  onDeleteAttendance={onDeleteAttendance}
+                  onDeleteStudent={onDeleteStudent}
+                  onSelectStudent={handleSelectStudent}
+                  onRowClick={handleRowClick}
+                />
               );
             })}
           </>
