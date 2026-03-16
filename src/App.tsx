@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import DashboardRouter from "@/components/DashboardRouter";
 import Auth from "./pages/Auth";
+import MarkAttendance from "./pages/MarkAttendance";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
         >
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/mark-attendance" element={<MarkAttendance />} />
             <Route path="/" element={
               <ProtectedRoute>
                 <DashboardRouter />

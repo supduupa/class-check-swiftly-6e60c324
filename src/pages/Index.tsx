@@ -15,7 +15,8 @@ import { Student, Attendance, AttendanceStatus, AttendanceRecord, Class } from "
 import { ClassSelector } from "@/components/ClassSelector";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { GraduationCap, LogOut, Download, Settings } from "lucide-react";
+import { GraduationCap, LogOut, Download, Settings, QrCode } from "lucide-react";
+import { QrCodeDialog } from "@/components/QrCodeDialog";
 import { useToast } from "@/hooks/use-toast";
 
 
@@ -30,6 +31,7 @@ const Index = () => {
   const [showCsvImport, setShowCsvImport] = useState(false);
   const [showCsvExport, setShowCsvExport] = useState(false);
   const [showRoleManagement, setShowRoleManagement] = useState(false);
+  const [showQrCode, setShowQrCode] = useState(false);
   const [loading, setLoading] = useState(true);
   const { profile, signOut } = useAuth();
   const { toast } = useToast();
@@ -875,6 +877,17 @@ const Index = () => {
             </div>
             <div className="flex items-center gap-2 lg:gap-4 flex-wrap">
               <Button
+                onClick={() => setShowQrCode(true)}
+                variant="outline"
+                size="sm"
+                className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+                disabled={!selectedClassId}
+              >
+                <QrCode className="h-4 w-4 mr-1 lg:mr-2" />
+                <span className="hidden lg:inline">QR Code</span>
+                <span className="lg:hidden">QR</span>
+              </Button>
+              <Button
                 onClick={() => setShowCsvExport(true)}
                 variant="outline"
                 size="sm"
@@ -1040,6 +1053,15 @@ const Index = () => {
         currentDate={selectedDateString}
       />
 
+      {/* QR Code Dialog */}
+      <QrCodeDialog
+        open={showQrCode}
+        onOpenChange={setShowQrCode}
+        classId={selectedClassId}
+        className={classes.find(c => c.id === selectedClassId)?.class_name || ""}
+        date={selectedDateString}
+      />
+
       {/* Mobile Bottom Navigation */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex items-center justify-around py-2 px-4">
@@ -1051,6 +1073,16 @@ const Index = () => {
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
             <span className="text-[10px] font-medium">Add Student</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowQrCode(true)}
+            disabled={!selectedClassId}
+            className="flex flex-col items-center gap-1 h-auto py-2 px-3"
+          >
+            <QrCode className="h-5 w-5" />
+            <span className="text-[10px] font-medium">QR Code</span>
           </Button>
           <Button
             variant="ghost"
