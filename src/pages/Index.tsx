@@ -15,7 +15,8 @@ import { Student, Attendance, AttendanceStatus, AttendanceRecord, Class } from "
 import { ClassSelector } from "@/components/ClassSelector";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { GraduationCap, LogOut, Download, Settings } from "lucide-react";
+import { GraduationCap, LogOut, Download, Settings, QrCode } from "lucide-react";
+import { QrCodeDialog } from "@/components/QrCodeDialog";
 import { useToast } from "@/hooks/use-toast";
 
 
