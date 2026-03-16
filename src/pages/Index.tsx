@@ -1083,6 +1083,7 @@ const Index = () => {
           >
             <QrCode className="h-5 w-5" />
             <span className="text-[10px] font-medium">QR Code</span>
+          </Button>
           <Button
             variant="ghost"
             size="sm"
