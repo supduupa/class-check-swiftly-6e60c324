@@ -1068,6 +1068,15 @@ const Index = () => {
           <Button
             variant="ghost"
             size="sm"
+            onClick={() => setShowQrCode(true)}
+            disabled={!selectedClassId}
+            className="flex flex-col items-center gap-1 h-auto py-2 px-3"
+          >
+            <QrCode className="h-5 w-5" />
+            <span className="text-[10px] font-medium">QR Code</span>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setShowCsvExport(true)}
             className="flex flex-col items-center gap-1 h-auto py-2 px-3"
           >
