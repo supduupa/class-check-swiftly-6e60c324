@@ -26,6 +26,7 @@ const App = () => (
         >
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/mark-attendance" element={<MarkAttendance />} />
             <Route path="/" element={
               <ProtectedRoute>
                 <DashboardRouter />
