@@ -1053,6 +1053,15 @@ const Index = () => {
         currentDate={selectedDateString}
       />
 
+      {/* QR Code Dialog */}
+      <QrCodeDialog
+        open={showQrCode}
+        onOpenChange={setShowQrCode}
+        classId={selectedClassId}
+        className={classes.find(c => c.id === selectedClassId)?.class_name || ""}
+        date={selectedDateString}
+      />
+
       {/* Mobile Bottom Navigation */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex items-center justify-around py-2 px-4">
