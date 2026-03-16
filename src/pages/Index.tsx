@@ -877,6 +877,17 @@ const Index = () => {
             </div>
             <div className="flex items-center gap-2 lg:gap-4 flex-wrap">
               <Button
+                onClick={() => setShowQrCode(true)}
+                variant="outline"
+                size="sm"
+                className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+                disabled={!selectedClassId}
+              >
+                <QrCode className="h-4 w-4 mr-1 lg:mr-2" />
+                <span className="hidden lg:inline">QR Code</span>
+                <span className="lg:hidden">QR</span>
+              </Button>
+              <Button
                 onClick={() => setShowCsvExport(true)}
                 variant="outline"
                 size="sm"
