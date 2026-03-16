@@ -31,6 +31,7 @@ const Index = () => {
   const [showCsvImport, setShowCsvImport] = useState(false);
   const [showCsvExport, setShowCsvExport] = useState(false);
   const [showRoleManagement, setShowRoleManagement] = useState(false);
+  const [showQrCode, setShowQrCode] = useState(false);
   const [loading, setLoading] = useState(true);
   const { profile, signOut } = useAuth();
   const { toast } = useToast();
