@@ -203,7 +203,7 @@ export function StudentList({
               onClick={onImportStudents}
               variant="outline" 
               size="mobile"
-              className="border-primary/20 hover:bg-primary/5 min-h-[44px]"
+              className="border-primary/20 hover:bg-primary/5 min-h-[44px] hidden md:inline-flex"
             >
               <Upload className="h-4 w-4 mr-2" />
               Import
@@ -211,7 +211,7 @@ export function StudentList({
             <Button 
               onClick={onAddStudent} 
               size="mobile"
-              className="bg-primary hover:bg-primary/90 min-h-[44px]"
+              className="bg-primary hover:bg-primary/90 min-h-[44px] hidden md:inline-flex"
             >
               <UserPlus className="h-4 w-4 mr-2" />
               Add Student
