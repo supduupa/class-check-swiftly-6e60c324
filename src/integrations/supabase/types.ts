@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.4"
+    PostgrestVersion: "14.4"
   }
   public: {
     Tables: {
@@ -21,6 +21,7 @@ export type Database = {
           date: string
           id: string
           note: string | null
+          session_id: string | null
           status: Database["public"]["Enums"]["attendance_status"]
           student_id: string
           updated_at: string
@@ -31,6 +32,7 @@ export type Database = {
           date: string
           id?: string
           note?: string | null
+          session_id?: string | null
           status?: Database["public"]["Enums"]["attendance_status"]
           student_id: string
           updated_at?: string
@@ -41,6 +43,7 @@ export type Database = {
           date?: string
           id?: string
           note?: string | null
+          session_id?: string | null
           status?: Database["public"]["Enums"]["attendance_status"]
           student_id?: string
           updated_at?: string
@@ -173,18 +176,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_current_user_role: {
-        Args: Record<PropertyKey, never>
-        Returns: Database["public"]["Enums"]["app_role"]
-      }
-      get_user_class_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      is_staff_user: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      get_user_class_id: { Args: { _user_id: string }; Returns: string }
+      is_staff_user: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "Teacher" | "CourseRep" | "Student"

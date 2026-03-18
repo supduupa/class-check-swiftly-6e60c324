@@ -15,9 +15,10 @@ import { Student, Attendance, AttendanceStatus, AttendanceRecord, Class } from "
 import { ClassSelector } from "@/components/ClassSelector";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { GraduationCap, LogOut, Download, Settings } from "lucide-react";
+import { GraduationCap, LogOut, Download, Settings, QrCode } from "lucide-react";
+import { QrCodeDialog } from "@/components/QrCodeDialog";
 import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
+
 
 const Index = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -30,30 +31,37 @@ const Index = () => {
   const [showCsvImport, setShowCsvImport] = useState(false);
   const [showCsvExport, setShowCsvExport] = useState(false);
   const [showRoleManagement, setShowRoleManagement] = useState(false);
+  const [showQrCode, setShowQrCode] = useState(false);
   const [loading, setLoading] = useState(true);
   const { profile, signOut } = useAuth();
   const { toast } = useToast();
-  const isMobile = useIsMobile();
+  
 
   const selectedDateString = format(selectedDate, 'yyyy-MM-dd');
 
   // Load data from Supabase
   useEffect(() => {
     if (profile) {
-      loadClasses();
+      void loadClasses();
     }
   }, [profile]);
 
   useEffect(() => {
-    if (selectedClassId) {
-      loadStudents();
-      loadAttendance();
+    if (!selectedClassId) {
+      setStudents([]);
+      setAttendanceRecords([]);
+      return;
     }
+
+    setLoading(true);
+    void Promise.all([loadStudents(), loadAttendance()]).finally(() => {
+      setLoading(false);
+    });
   }, [selectedClassId]);
 
   useEffect(() => {
     if (selectedClassId) {
-      loadAttendance(); // Reload attendance when date changes
+      void loadAttendance(); // Reload attendance when date changes
     }
   }, [selectedDateString]);
 
@@ -80,6 +88,8 @@ const Index = () => {
         } else {
           // CourseRep has no class assigned
           setClasses([]);
+          setSelectedClassId(null);
+          setLoading(false);
           return;
         }
       }
@@ -88,6 +98,7 @@ const Index = () => {
 
       if (error) {
         console.error('Error loading classes:', error);
+        setLoading(false);
         return;
       }
 
@@ -100,12 +111,21 @@ const Index = () => {
 
       setClasses(loadedClasses);
 
-      // Auto-select the first (and often only) class for Teachers and CourseReps
-      if (loadedClasses.length > 0 && !selectedClassId) {
+      if (loadedClasses.length === 0) {
+        setSelectedClassId(null);
+        setStudents([]);
+        setAttendanceRecords([]);
+        setLoading(false);
+        return;
+      }
+
+      // Auto-select the first class when no class is selected or current selection is stale
+      if (!selectedClassId || !loadedClasses.some(cls => cls.id === selectedClassId)) {
         setSelectedClassId(loadedClasses[0].id);
       }
     } catch (error) {
       console.error('Error loading classes:', error);
+      setLoading(false);
     }
   };
 
@@ -143,8 +163,6 @@ const Index = () => {
       })));
     } catch (error) {
       console.error('Error loading students:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -840,46 +858,150 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {isMobile ? (
-        <>
-          <MobileHeader 
-            selectedDate={selectedDate}
-            onSignOut={signOut}
-            userName={profile?.full_name || profile?.email}
-          />
-          <main className="px-4 pb-6 space-y-4">
-            {/* Mobile Class and Date Selector */}
-            <Card className="p-4 bg-gradient-mobile space-y-3">
-              <div className="flex gap-2 items-center">
-                <div className="flex-1">
-                  <ClassSelector 
-                    classes={classes}
-                    selectedClassId={selectedClassId}
-                    onSelectClass={setSelectedClassId}
-                    onDeleteClass={handleDeleteClass}
-                    loading={loading}
-                  />
-                </div>
+      {/* Mobile Header - visible on small screens */}
+      <div className="md:hidden">
+        <MobileHeader 
+          selectedDate={selectedDate}
+          onSignOut={signOut}
+          userName={profile?.full_name || profile?.email}
+        />
+      </div>
+
+      {/* Desktop/Tablet Header - visible on md+ */}
+      <div className="hidden md:block bg-gradient-to-r from-primary to-primary/90 text-primary-foreground">
+        <div className="container mx-auto px-4 lg:px-6 py-6 lg:py-8">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4 lg:mb-6">
+            <div className="flex items-center gap-3">
+              <GraduationCap className="h-7 w-7 lg:h-8 lg:w-8" />
+              <h1 className="text-2xl lg:text-3xl font-bold">Class Attendance</h1>
+            </div>
+            <div className="flex items-center gap-2 lg:gap-4 flex-wrap">
+              <Button
+                onClick={() => setShowQrCode(true)}
+                variant="outline"
+                size="sm"
+                className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+                disabled={!selectedClassId}
+              >
+                <QrCode className="h-4 w-4 mr-1 lg:mr-2" />
+                <span className="hidden lg:inline">QR Code</span>
+                <span className="lg:hidden">QR</span>
+              </Button>
+              <Button
+                onClick={() => setShowCsvExport(true)}
+                variant="outline"
+                size="sm"
+                className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+              >
+                <Download className="h-4 w-4 mr-1 lg:mr-2" />
+                <span className="hidden lg:inline">Export CSV</span>
+                <span className="lg:hidden">Export</span>
+              </Button>
+              <span className="text-xs lg:text-sm text-primary-foreground/80 hidden lg:inline">
+                Welcome, {profile?.full_name} ({profile?.role})
+              </span>
+              <Button
+                onClick={signOut}
+                variant="outline"
+                size="sm"
+                className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+              >
+                <LogOut className="h-4 w-4 mr-1 lg:mr-2" />
+                <span className="hidden lg:inline">Sign Out</span>
+                <span className="lg:hidden">Exit</span>
+              </Button>
+            </div>
+          </div>
+          
+          <div className="flex flex-col lg:flex-row gap-3 lg:gap-4 items-start lg:items-center justify-between">
+            <div>
+              <h2 className="text-lg lg:text-xl font-semibold mb-1">Daily Attendance</h2>
+              <p className="text-sm text-primary-foreground/80">
+                Track attendance for {students.length} students
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center w-full lg:w-auto">
+              <div className="flex gap-2 items-center w-full sm:w-auto">
+                <ClassSelector 
+                  classes={classes}
+                  selectedClassId={selectedClassId}
+                  onSelectClass={setSelectedClassId}
+                  onDeleteClass={handleDeleteClass}
+                  loading={loading}
+                />
                 <Button
                   onClick={() => setShowAddClass(true)}
                   variant="outline"
                   size="sm"
-                  className="shrink-0"
+                  className="bg-white/10 text-white border-white/20 hover:bg-white/20 shrink-0"
                 >
                   New Class
                 </Button>
               </div>
-              <DateSelector selectedDate={selectedDate} onDateChange={setSelectedDate} />
-            </Card>
+              <DateSelector 
+                selectedDate={selectedDate}
+                onDateChange={setSelectedDate}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
 
-            {/* Mobile Summary */}
-            <DailySummary
-              students={students}
-              attendanceRecords={attendanceRecords}
-              selectedDate={selectedDateString}
-            />
+      {/* Mobile Content */}
+      <main className="md:hidden px-4 pb-20 space-y-4">
+        <Card className="p-4 bg-gradient-mobile space-y-3">
+          <div className="flex gap-2 items-center">
+            <div className="flex-1">
+              <ClassSelector 
+                classes={classes}
+                selectedClassId={selectedClassId}
+                onSelectClass={setSelectedClassId}
+                onDeleteClass={handleDeleteClass}
+                loading={loading}
+              />
+            </div>
+            <Button
+              onClick={() => setShowAddClass(true)}
+              variant="outline"
+              size="sm"
+              className="shrink-0"
+            >
+              New Class
+            </Button>
+          </div>
+          <DateSelector selectedDate={selectedDate} onDateChange={setSelectedDate} />
+        </Card>
 
-            {/* Main Content */}
+        <DailySummary
+          students={students}
+          attendanceRecords={attendanceRecords}
+          selectedDate={selectedDateString}
+        />
+
+        <StudentList
+          students={students}
+          attendanceRecords={attendanceRecords}
+          selectedDate={selectedDateString}
+          onAttendanceChange={handleAttendanceChange}
+          onBulkAttendanceChange={handleBulkAttendanceChange}
+          onDeleteAttendance={handleDeleteAttendance}
+          onAddStudent={() => setShowAddStudent(true)}
+          onImportStudents={() => setShowCsvImport(true)}
+          onDeleteStudent={handleDeleteStudent}
+          onUpdateNote={handleUpdateNote}
+        />
+      </main>
+
+      {/* Desktop/Tablet Content */}
+      <div className="hidden md:block container mx-auto px-4 lg:px-6 py-6 lg:py-8 space-y-6">
+        <DailySummary
+          students={students}
+          attendanceRecords={attendanceRecords}
+          selectedDate={selectedDateString}
+        />
+        
+        <Card className="shadow-lg">
+          <div className="p-4 lg:p-6">
             <StudentList
               students={students}
               attendanceRecords={attendanceRecords}
@@ -892,106 +1014,11 @@ const Index = () => {
               onDeleteStudent={handleDeleteStudent}
               onUpdateNote={handleUpdateNote}
             />
-          </main>
-        </>
-      ) : (
-        <>
-          {/* Desktop Header */}
-          <div className="bg-gradient-to-r from-primary to-primary/90 text-primary-foreground">
-            <div className="container mx-auto px-4 py-8">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <GraduationCap className="h-8 w-8" />
-                  <h1 className="text-3xl font-bold">Class Attendance</h1>
-                </div>
-                <div className="flex items-center gap-4">
-                  <Button
-                    onClick={() => setShowCsvExport(true)}
-                    variant="outline"
-                    size="sm"
-                    className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Export CSV
-                  </Button>
-                  <span className="text-sm text-primary-foreground/80">
-                    Welcome, {profile?.full_name} ({profile?.role})
-                  </span>
-                  <Button
-                    onClick={signOut}
-                    variant="outline"
-                    size="sm"
-                    className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Sign Out
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-semibold mb-1">Daily Attendance</h2>
-                  <p className="text-primary-foreground/80">
-                    Track attendance for {students.length} students
-                  </p>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-                  <div className="flex gap-2 items-center">
-                    <ClassSelector 
-                      classes={classes}
-                      selectedClassId={selectedClassId}
-                      onSelectClass={setSelectedClassId}
-                      onDeleteClass={handleDeleteClass}
-                      loading={loading}
-                    />
-                    <Button
-                      onClick={() => setShowAddClass(true)}
-                      variant="outline"
-                      size="sm"
-                      className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-                    >
-                      New Class
-                    </Button>
-                  </div>
-                  <DateSelector 
-                    selectedDate={selectedDate}
-                    onDateChange={setSelectedDate}
-                  />
-                </div>
-              </div>
-            </div>
           </div>
+        </Card>
 
-          {/* Main Content */}
-          <div className="container mx-auto px-4 py-8 space-y-6">
-            <DailySummary
-              students={students}
-              attendanceRecords={attendanceRecords}
-              selectedDate={selectedDateString}
-            />
-            
-            <Card className="shadow-lg">
-              <div className="p-6">
-                  <StudentList
-                    students={students}
-                    attendanceRecords={attendanceRecords}
-                    selectedDate={selectedDateString}
-                    onAttendanceChange={handleAttendanceChange}
-                    onBulkAttendanceChange={handleBulkAttendanceChange}
-                    onDeleteAttendance={handleDeleteAttendance}
-                    onAddStudent={() => setShowAddStudent(true)}
-                    onImportStudents={() => setShowCsvImport(true)}
-                    onDeleteStudent={handleDeleteStudent}
-                    onUpdateNote={handleUpdateNote}
-                  />
-              </div>
-            </Card>
-
-            <RoleManagement />
-          </div>
-        </>
-      )}
+        <RoleManagement />
+      </div>
 
       {/* Add Student Dialog */}
       <AddStudentDialog
@@ -1025,6 +1052,67 @@ const Index = () => {
         attendanceRecords={attendanceRecordsWithStudents}
         currentDate={selectedDateString}
       />
+
+      {/* QR Code Dialog */}
+      <QrCodeDialog
+        open={showQrCode}
+        onOpenChange={setShowQrCode}
+        classId={selectedClassId}
+        className={classes.find(c => c.id === selectedClassId)?.class_name || ""}
+        date={selectedDateString}
+      />
+
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex items-center justify-around py-2 px-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAddStudent(true)}
+            className="flex flex-col items-center gap-1 h-auto py-2 px-3"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
+            <span className="text-[10px] font-medium">Add Student</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowQrCode(true)}
+            disabled={!selectedClassId}
+            className="flex flex-col items-center gap-1 h-auto py-2 px-3"
+          >
+            <QrCode className="h-5 w-5" />
+            <span className="text-[10px] font-medium">QR Code</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowCsvExport(true)}
+            className="flex flex-col items-center gap-1 h-auto py-2 px-3"
+          >
+            <Download className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Export</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowCsvImport(true)}
+            className="flex flex-col items-center gap-1 h-auto py-2 px-3"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+            <span className="text-[10px] font-medium">Import</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={signOut}
+            className="flex flex-col items-center gap-1 h-auto py-2 px-3"
+          >
+            <LogOut className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Sign Out</span>
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };

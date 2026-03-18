@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile } from '@/types/profile';
@@ -14,6 +14,10 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const MAX_PROFILE_FETCH_ATTEMPTS = 5;
+const RETRY_BASE_DELAY_MS = 250;
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -27,98 +31,204 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [authReady, setAuthReady] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
 
-  const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-      
-      if (error) {
-        // Handle JWT expiration by signing out
-        if (error.code === 'PGRST301' || error.code === 'PGRST303' || error.message?.includes('JWT')) {
-          console.log('JWT expired, signing out...');
-          await supabase.auth.signOut();
+  const authReadyRef = useRef(false);
+  const profileCreationAttemptedRef = useRef<Set<string>>(new Set());
+
+  const fetchProfile = async (authUser: User): Promise<Profile | null> => {
+    for (let attempt = 0; attempt < MAX_PROFILE_FETCH_ATTEMPTS; attempt += 1) {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', authUser.id)
+          .maybeSingle();
+
+        if (error) {
+          if (error.code === 'PGRST301' || error.code === 'PGRST303' || error.message?.includes('JWT')) {
+            console.log('JWT expired, signing out...');
+            await supabase.auth.signOut();
+            return null;
+          }
+
+          if (!error.message?.includes('Failed to fetch')) {
+            console.error('Error fetching profile:', error);
+          }
+
           return null;
         }
-        
-        // Only log non-network errors to avoid console noise
-        if (!error.message?.includes('Failed to fetch')) {
+
+        if (data) {
+          return data;
+        }
+
+        if (attempt < MAX_PROFILE_FETCH_ATTEMPTS - 1) {
+          await wait(RETRY_BASE_DELAY_MS * (attempt + 1));
+          continue;
+        }
+
+        if (profileCreationAttemptedRef.current.has(authUser.id)) {
+          return null;
+        }
+
+        const {
+          data: { user: verifiedUser },
+          error: verifyError,
+        } = await supabase.auth.getUser();
+
+        if (verifyError || !verifiedUser || verifiedUser.id !== authUser.id) {
+          return null;
+        }
+
+        profileCreationAttemptedRef.current.add(authUser.id);
+
+        const fallbackName =
+          authUser.user_metadata?.full_name ||
+          authUser.user_metadata?.name ||
+          authUser.email?.split('@')[0] ||
+          'User';
+
+        const { data: createdProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authUser.id,
+            full_name: fallbackName,
+            email: authUser.email ?? null,
+            role: 'Student',
+          })
+          .select('*')
+          .maybeSingle();
+
+        if (createError) {
+          const { data: refetchedProfile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', authUser.id)
+            .maybeSingle();
+
+          if (refetchedProfile) {
+            return refetchedProfile;
+          }
+
+          if (
+            !createError.message?.includes('duplicate key') &&
+            createError.code !== '23505' &&
+            createError.code !== '42501'
+          ) {
+            console.error('Error creating profile:', createError);
+          }
+
+          return null;
+        }
+
+        return createdProfile;
+      } catch (error) {
+        if (error instanceof Error && !error.message?.includes('Failed to fetch')) {
           console.error('Error fetching profile:', error);
         }
-        
         return null;
       }
-      
-      return data;
-    } catch (error) {
-      // Only log non-network errors to avoid console noise
-      if (error instanceof Error && !error.message?.includes('Failed to fetch')) {
-        console.error('Error fetching profile:', error);
-      }
-      return null;
     }
+
+    return null;
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Fetch profile after user is set
-          setTimeout(async () => {
-            const profileData = await fetchProfile(session.user.id);
-            setProfile(profileData);
-            setLoading(false);
-          }, 0);
-        } else {
-          setProfile(null);
-          setLoading(false);
-        }
-      }
-    );
+    let isMounted = true;
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        const profileData = await fetchProfile(session.user.id);
-        setProfile(profileData);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (!isMounted) return;
+
+      if (event === 'SIGNED_OUT') {
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+        setProfileLoading(false);
+        return;
       }
-      setLoading(false);
+
+      if (nextSession) {
+        setSession(nextSession);
+        setUser(nextSession.user);
+      } else if (!authReadyRef.current) {
+        setSession(null);
+        setUser(null);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    void supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+      if (!isMounted) return;
+
+      setSession(existingSession);
+      setUser(existingSession?.user ?? null);
+      authReadyRef.current = true;
+      setAuthReady(true);
+
+      if (!existingSession?.user) {
+        setProfile(null);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!authReady) {
+      return;
+    }
+
+    if (!user) {
+      setProfile(null);
+      setProfileLoading(false);
+      return;
+    }
+
+    setProfile(null);
+    setProfileLoading(true);
+
+    void (async () => {
+      const profileData = await fetchProfile(user);
+      if (!cancelled) {
+        setProfile(profileData);
+        setProfileLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authReady, user?.id]);
 
   const signUp = async (email: string, password: string, fullName: string) => {
     const redirectUrl = `${window.location.origin}/`;
-    
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
         data: {
-          full_name: fullName
-        }
-      }
+          full_name: fullName,
+        },
+      },
     });
+
     return { error };
   };
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
-      password
+      password,
     });
     return { error };
   };
@@ -126,16 +236,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     await supabase.auth.signOut();
     setProfile(null);
+    setProfileLoading(false);
   };
 
   const value = {
     user,
     session,
     profile,
-    loading,
+    loading: !authReady || profileLoading,
     signUp,
     signIn,
-    signOut
+    signOut,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
