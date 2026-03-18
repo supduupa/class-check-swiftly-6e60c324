@@ -62,14 +62,29 @@ export default function RoleManagement() {
         return;
       }
 
-      // Update local state
+      // Re-fetch from database to ensure UI reflects persisted state
+      const { data: updatedProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (fetchError || !updatedProfile) {
+        toast({
+          title: "Warning",
+          description: "Role updated but failed to refresh. Please reload.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setUsers(users.map(user => 
-        user.id === userId ? { ...user, role: newRole } : user
+        user.id === userId ? updatedProfile : user
       ));
 
       toast({
         title: "Success",
-        description: "User role updated successfully",
+        description: `Role updated to ${newRole}`,
       });
     } catch (error) {
       console.error('Error:', error);
