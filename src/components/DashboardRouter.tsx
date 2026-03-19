@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { isStaff } from '@/types/profile';
 import StudentDashboard from '@/components/StudentDashboard';
 import StaffDashboard from '@/components/StaffDashboard';
-import { GraduationCap, BookOpen, LogOut } from 'lucide-react';
+import StudentLinkForm from '@/components/StudentLinkForm';
+import { GraduationCap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
 
 export default function DashboardRouter() {
   const { profile, loading, signOut } = useAuth();
