@@ -33,6 +33,22 @@ export default function DashboardRouter() {
     checkClassAssignment();
   }, [profile]);
 
+  const handleLinked = useCallback(() => {
+    setClassCheckLoading(true);
+    // Re-check class assignment after linking
+    const recheck = async () => {
+      const { data } = await supabase
+        .from('students')
+        .select('id')
+        .eq('user_id', profile?.id)
+        .limit(1)
+        .maybeSingle();
+      setHasClass(!!data);
+      setClassCheckLoading(false);
+    };
+    recheck();
+  }, [profile]);
+
   if (loading || classCheckLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
