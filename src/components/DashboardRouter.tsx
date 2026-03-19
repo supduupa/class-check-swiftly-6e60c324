@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { isStaff } from '@/types/profile';
 import StudentDashboard from '@/components/StudentDashboard';
 import StaffDashboard from '@/components/StaffDashboard';
-import { GraduationCap, BookOpen, LogOut } from 'lucide-react';
+import StudentLinkForm from '@/components/StudentLinkForm';
+import { GraduationCap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
 
 export default function DashboardRouter() {
   const { profile, loading, signOut } = useAuth();
@@ -31,6 +31,22 @@ export default function DashboardRouter() {
     };
 
     checkClassAssignment();
+  }, [profile]);
+
+  const handleLinked = useCallback(() => {
+    setClassCheckLoading(true);
+    // Re-check class assignment after linking
+    const recheck = async () => {
+      const { data } = await supabase
+        .from('students')
+        .select('id')
+        .eq('user_id', profile?.id)
+        .limit(1)
+        .maybeSingle();
+      setHasClass(!!data);
+      setClassCheckLoading(false);
+    };
+    recheck();
   }, [profile]);
 
   if (loading || classCheckLoading) {
@@ -59,30 +75,9 @@ export default function DashboardRouter() {
     return <StaffDashboard />;
   }
 
-  // Student with no class assignment
+  // Student with no class — show self-link form
   if (!hasClass) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-6 max-w-md px-4">
-          <div className="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto">
-            <BookOpen className="h-8 w-8 text-primary" />
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-foreground">No Class Assigned</h1>
-            <p className="text-muted-foreground">
-              You haven't been assigned to a class yet. Please contact your instructor to get added to a class.
-            </p>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Once your instructor adds you to a class, you'll be able to view your attendance records here.
-          </p>
-          <Button variant="outline" onClick={signOut} className="gap-2">
-            <LogOut className="h-4 w-4" />
-            Sign Out
-          </Button>
-        </div>
-      </div>
-    );
+    return <StudentLinkForm onLinked={handleLinked} />;
   }
 
   return <StudentDashboard />;
