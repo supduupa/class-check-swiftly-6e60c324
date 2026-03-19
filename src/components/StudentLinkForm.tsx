@@ -91,9 +91,9 @@ export default function StudentLinkForm({ onLinked }: StudentLinkFormProps) {
         </CardHeader>
         <CardContent>
           {success ? (
-            <Alert className="border-green-500/50 bg-green-500/10">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-700">
+            <Alert className="border-primary/50 bg-primary/10">
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+              <AlertDescription className="text-foreground">
                 You have been assigned to your class! Redirecting…
               </AlertDescription>
             </Alert>
