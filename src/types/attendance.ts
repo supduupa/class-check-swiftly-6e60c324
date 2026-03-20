@@ -12,6 +12,7 @@ export interface Student {
   email?: string;
   phone?: string;
   classId?: string;
+  linked?: boolean;
 }
 
 export type AttendanceStatus = 'Present' | 'Absent' | 'Late' | 'Excused';
