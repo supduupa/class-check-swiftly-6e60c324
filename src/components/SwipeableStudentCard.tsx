@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { AttendanceStatus } from "./AttendanceStatus";
 import { Student, AttendanceStatus as Status } from "@/types/attendance";
-import { Trash2, StickyNote, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trash2, StickyNote, ChevronLeft, ChevronRight, Link, Link2Off } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const statusOrder: Status[] = ['Present', 'Late', 'Absent', 'Excused'];
@@ -165,6 +165,19 @@ export function SwipeableStudentCard({
                   <Badge variant="outline" className="text-xs font-medium">
                     ID: {student.studentId}
                   </Badge>
+                  {student.linked !== undefined && (
+                    student.linked ? (
+                      <Badge variant="secondary" className="text-xs font-medium bg-status-present/15 text-status-present border-status-present/30">
+                        <Link className="h-3 w-3 mr-1" />
+                        Linked
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-xs font-medium bg-status-late/15 text-status-late border-status-late/30">
+                        <Link2Off className="h-3 w-3 mr-1" />
+                        Pending
+                      </Badge>
+                    )
+                  )}
                 </div>
                 {(student.email || student.phone) && (
                   <p className="text-sm text-muted-foreground truncate">
