@@ -173,7 +173,7 @@ export function SwipeableStudentCard({
                       </Badge>
                     ) : (
                       <Badge variant="secondary" className="text-xs font-medium bg-status-late/15 text-status-late border-status-late/30">
-                        <LinkOff className="h-3 w-3 mr-1" />
+                        <Link2Off className="h-3 w-3 mr-1" />
                         Pending
                       </Badge>
                     )
