@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { AttendanceStatus } from "./AttendanceStatus";
 import { Student, AttendanceStatus as Status } from "@/types/attendance";
-import { Trash2, StickyNote, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trash2, StickyNote, ChevronLeft, ChevronRight, Link, LinkOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const statusOrder: Status[] = ['Present', 'Late', 'Absent', 'Excused'];
