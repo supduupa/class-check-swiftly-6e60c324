@@ -159,7 +159,8 @@ const Index = () => {
         studentId: student.student_id,
         email: student.email,
         phone: student.phone,
-        classId: student.class_id
+        classId: student.class_id,
+        linked: !!student.user_id,
       })));
     } catch (error) {
       console.error('Error loading students:', error);

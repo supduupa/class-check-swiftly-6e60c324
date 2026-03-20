@@ -165,6 +165,19 @@ export function SwipeableStudentCard({
                   <Badge variant="outline" className="text-xs font-medium">
                     ID: {student.studentId}
                   </Badge>
+                  {student.linked !== undefined && (
+                    student.linked ? (
+                      <Badge variant="secondary" className="text-xs font-medium bg-status-present/15 text-status-present border-status-present/30">
+                        <Link className="h-3 w-3 mr-1" />
+                        Linked
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-xs font-medium bg-status-late/15 text-status-late border-status-late/30">
+                        <LinkOff className="h-3 w-3 mr-1" />
+                        Pending
+                      </Badge>
+                    )
+                  )}
                 </div>
                 {(student.email || student.phone) && (
                   <p className="text-sm text-muted-foreground truncate">
