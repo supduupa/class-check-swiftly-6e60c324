@@ -32,6 +32,7 @@ export default function MarkAttendance() {
     }
 
     markAttendance();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading, classId, date]);
 
   const markAttendance = async () => {

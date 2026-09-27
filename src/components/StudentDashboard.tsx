@@ -24,6 +24,7 @@ export default function StudentDashboard() {
       fetchStudentData();
       fetchAttendanceHistory();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile]);
 
   const fetchStudentData = async () => {

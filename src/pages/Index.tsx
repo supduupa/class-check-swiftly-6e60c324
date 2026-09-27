@@ -44,6 +44,7 @@ const Index = () => {
     if (profile) {
       void loadClasses();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile]);
 
   useEffect(() => {
@@ -57,12 +58,14 @@ const Index = () => {
     void Promise.all([loadStudents(), loadAttendance()]).finally(() => {
       setLoading(false);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedClassId]);
 
   useEffect(() => {
     if (selectedClassId) {
       void loadAttendance(); // Reload attendance when date changes
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDateString]);
 
   const loadClasses = async () => {
